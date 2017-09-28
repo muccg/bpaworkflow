@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+{% load static from staticfiles %}
+
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    {% block head_meta_viewport %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=11">
+    {% endblock %}
+    
+    <title>BPA Workflow Facility</title>
+    {% load static from staticfiles %}
+    {% load bootstrap3 %}
+    
+    {% bootstrap_css %}
+    {% bootstrap_javascript jquery=True %}
+    
+    <link rel="icon" href="{% static 'bpa-logos/favicon.ico' %}" type="image/x-icon">
+    
+    <script src="{% static 'bpaworkflow/bpaworkflow.js' %}"></script>
+    
+    <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/common.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/bpaworkflow.css' %}"/>
+    
+    {% block extra_head %}
+    {% endblock %}
+    
+</head>
+<body>
+    <div id="wrap">
+        <header class="navbar navbar-static-top">
+            <div class="container">
+                <a class="logo" href="https://data.bioplatforms.com/">
+                    <img src="{% static 'bpa-logos/BioplatformsAustralia.png' %}" alt="Bioplatform Australia" />
+                </a>
+            </div>
+            
+            {% if DEBUG_ONLY_VIEW %}
+            <div class="alert alert-warning text-center">
+                This page should be accessible only in <strong>DEBUG</strong> mode.
+            </div>
+            {% endif %}
+        </header>
+        <div class="hide container" id="error-bar"></div>
+        
+        <div class="content-div">
+            
+            {% csrf_token %}
+
+        </div>
+            
+    </div>
+    
+    <footer class="site-footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="container">
+                    <div class="span4">
+                        <a href="https://www.education.gov.au/national-collaborative-research-infrastructure-strategy-ncris">
+                            <img id="ncris-img" src="{% static 'bpa-logos/ncris.png' %}" alt="NCRIS" />
+                        </a>
+                    </div>
+                    <div class="span4">
+                        <p><a href="http://www.bioplatforms.com">Operated by Bioplatforms Australia</a></p>
+                        <p><a href="http://www.bioplatforms.com/contact/">Contact</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        window.bpa_workflow_config = {
+            'ckan_base_url': "{{ ckan_base_url }}",
+        };
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="popover"]').popover({html:true})
+        })
+    </script>
+    
+</body>
+</html>

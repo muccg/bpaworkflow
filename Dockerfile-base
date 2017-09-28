@@ -1,0 +1,30 @@
+FROM muccg/python-base:3.6-debian-8
+MAINTAINER https://github.com/muccg/bpaworkflow
+
+ENV PROJECT_NAME bpaworkflow
+ENV PROJECT_SOURCE git@github.com:muccg/bpaworkflow.git
+ENV DEPLOYMENT prod
+ENV PRODUCTION 1
+ENV DEBUG 0
+ENV STATIC_ROOT /data/static
+ENV WRITABLE_DIRECTORY /data/scratch
+ENV MEDIA_ROOT /data/static/media
+ENV LOG_DIRECTORY /data/log
+ENV MONGO_DB_PREFIX=prod_
+ENV DJANGO_SETTINGS_MODULE bpaworkflow.settings
+
+RUN env | sort
+
+# Project specific deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  gettext \
+  libpcre3 \
+  libpq5 \
+  gdal-bin \
+  libgeos-c1 \
+  libproj-dev \
+  mime-support \
+  unixodbc \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENTRYPOINT ["/bin/sh"]
