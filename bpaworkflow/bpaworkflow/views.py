@@ -1,17 +1,10 @@
-import re
-import csv
-import json
 import logging
-import zipstream
-import datetime
-from collections import defaultdict
+from bpaingest.projects import PROJECTS
 
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
-from django.http import JsonResponse, StreamingHttpResponse
-from io import StringIO
-import traceback
+from django.http import JsonResponse
 
 logger = logging.getLogger("rainbow")
 
@@ -24,3 +17,13 @@ class WorkflowIndex(TemplateView):
         context = super(WorkflowIndex, self).get_context_data(**kwargs)
         context['ckan_base_url'] = settings.CKAN_SERVERS[0]['base_url']
         return context
+
+
+@require_http_methods(["GET"])
+def metadata(request):
+    """
+    private API: given taxonomy constraints, return the possible options
+    """
+    return JsonResponse({
+        'projects': PROJECTS
+    })
