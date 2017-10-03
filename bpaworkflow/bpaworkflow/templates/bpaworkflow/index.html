@@ -24,7 +24,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.4/lodash.min.js"
     integrity="sha256-KteOoEtQ75FeAFFOTJZlvNt0iJ8NMusVDESd5jlwKEQ= sha384-+VyieUXwWQSImpRIFhlRJNe2KeZblzwXEF8LsYAO/cYlQdDG2SdJaky4Ud0sdVup sha512-coj002JZWtDMvnYzDgRXBzWlrEiS/EW2SNAYs0SVSDf62RSZ7ygs0leIGAjMiwe8cQRfqwrInDlHYsUSTDTPjQ=="
     crossorigin="anonymous"></script>
-
+    
     <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/common.css' %}"/>
     <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/bpaworkflow.css' %}"/>
     
@@ -40,48 +40,34 @@
                     <img src="{% static 'bpa-logos/BioplatformsAustralia.png' %}" alt="Bioplatform Australia" />
                 </a>
             </div>
-            
-            {% if DEBUG_ONLY_VIEW %}
-            <div class="alert alert-warning text-center">
-                This page should be accessible only in <strong>DEBUG</strong> mode.
-            </div>
-            {% endif %}
         </header>
         <div class="hide container" id="error-bar"></div>
-        
-        <div class="content-div">
-            
-            {% csrf_token %}
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-3">
-                    </div>
-                    <div class="col-md-6">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                Upload validation
-                            </div>
-                            
-                            <div class="panel-body">
-                                <div class="form-group"></div>
-                                    <select class="form-control" id="importer"></select>
-                                </div>
-                            </div>
 
-                            <div class="panel-footer">
-                                <div class="row">
-                                    <div class="col-md-5"></div>
-                                    <div class="col-md-2"><input class="btn btn-primary" type="button" id="validate" value="Validate" /></div>
-                                    <div class="col-md-5"></div>
-                                </div>
-                            </div>
+        <div class="container-fluid">
+
+            <div class="row">
+                <div class="col-md-3"></div>
+                <form class="form-horizontal col-md-6">
+                    <div class="form-group">
+                        <label for="project" class="col-sm-2 control-label">Project</label>
+                        <div class="col-sm-10">
+                            <select id="project" class="form-control"></select>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="importer" class="col-sm-2 control-label">Import type</label>
+                        <div class="col-sm-10">
+                            <select id="importer" class="form-control"></select>
+                        </div>
                     </div>
-                </div>
+                </form>
+                <div class="col-md-3"></div>
             </div>
+
         </div>
+        
+        
+        {% csrf_token %}
     </div>
     
     <footer class="site-footer">

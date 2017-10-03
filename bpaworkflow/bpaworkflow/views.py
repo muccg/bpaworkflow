@@ -1,10 +1,13 @@
 import logging
-from bpaingest.projects import ProjectInfo
-
+from collections import defaultdict
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
 from django.http import JsonResponse
+
+from bpaingest.projects import ProjectInfo
+from bpaingest.organizations import ORGANIZATIONS
+
 
 logger = logging.getLogger("rainbow")
 project_info = ProjectInfo()
@@ -25,6 +28,11 @@ def metadata(request):
     """
     private API: given taxonomy constraints, return the possible options
     """
+    by_organization = defaultdict(list)
+    for info in project_info.metadata_info:
+        obj = dict((t, info[t]) for t in ('slug', 'omics', 'technology', 'analysed', 'pool'))
+        by_organization[info['organization']].append(obj)
     return JsonResponse({
-        'projects': [dict((s, t[s]) for s in ('slug', 'omics', 'technology', 'analysed', 'pool', 'project')) for t in project_info.metadata_info]
+        'importers': by_organization,
+        'projects': dict((t['name'], dict((s, t[s]) for s in ('name', 'title'))) for t in ORGANIZATIONS if t['name'] in by_organization)
     })
