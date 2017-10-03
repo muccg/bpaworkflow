@@ -1,5 +1,5 @@
 import logging
-from bpaingest.projects import PROJECTS
+from bpaingest.projects import ProjectInfo
 
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
@@ -7,6 +7,7 @@ from django.views.generic import TemplateView
 from django.http import JsonResponse
 
 logger = logging.getLogger("rainbow")
+project_info = ProjectInfo()
 
 
 class WorkflowIndex(TemplateView):
@@ -25,5 +26,5 @@ def metadata(request):
     private API: given taxonomy constraints, return the possible options
     """
     return JsonResponse({
-        'projects': PROJECTS
+        'projects': [dict((s, t[s]) for s in ('slug', 'omics', 'technology', 'analysed', 'pool', 'project')) for t in project_info.metadata_info]
     })
