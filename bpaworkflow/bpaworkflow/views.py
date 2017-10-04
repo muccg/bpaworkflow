@@ -36,3 +36,13 @@ def metadata(request):
         'importers': by_organization,
         'projects': dict((t['name'], dict((s, t[s]) for s in ('name', 'title'))) for t in ORGANIZATIONS if t['name'] in by_organization)
     })
+
+
+@require_http_methods(["POST"])
+def validate(request):
+    """
+    private API: validate MD5 file, XLSX file for a given importer
+    """
+    return JsonResponse({
+        'validate': False
+    })

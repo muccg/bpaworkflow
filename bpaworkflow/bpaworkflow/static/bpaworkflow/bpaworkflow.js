@@ -7,7 +7,6 @@ $(document).ready(function() {
 
     var filesList = [];
     var paramNames = [];
-    var upload_selector = '.file-upload';
     
     var set_options = function(target, options) {
         target.empty();
@@ -85,7 +84,7 @@ $(document).ready(function() {
     }
 
     var reset_ui = function() {
-        var form = $("#fileupload")[0].reset();
+        var form = $("#verify-form")[0].reset();
         $.each(['md5', 'xlsx'], function(i, t) {
             $('#' + t + '-file').show();
             $('#' + t + '-done').hide();
@@ -115,8 +114,8 @@ $(document).ready(function() {
     
     setup();
     
-    $(upload_selector).fileupload({
-        url: 'test',
+    $("#verify-form").fileupload({
+        url: window.bpa_workflow_config['validate_endpoint'],
         type: 'POST',
         dataType: 'json',
         autoUpload: false,
@@ -139,7 +138,7 @@ $(document).ready(function() {
             
             return false;
         }
-    })
+    });
 
     $('#reset-btn').click(function (e) {
         e.preventDefault();
@@ -150,6 +149,9 @@ $(document).ready(function() {
         console.log(filesList);
         console.log(paramNames);
         e.preventDefault();
-        $(upload_selector).fileupload('send', {files: filesList});
+        $("#verify-form").fileupload('send', {
+            files: filesList,
+            formData: $("#verify-form").serializeArray()
+        });
     });
 });
