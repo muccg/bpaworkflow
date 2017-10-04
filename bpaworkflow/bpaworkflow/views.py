@@ -7,6 +7,7 @@ from django.http import JsonResponse
 
 from bpaingest.projects import ProjectInfo
 from bpaingest.organizations import ORGANIZATIONS
+from .validate import run_validator
 
 
 logger = logging.getLogger("rainbow")
@@ -43,6 +44,14 @@ def validate(request):
     """
     private API: validate MD5 file, XLSX file for a given importer
     """
+    cls = project_info.cli_options().get(request.POST['importer'])
+    if not cls:
+        return JsonResponse({
+            'error': 'invalid submission'
+        })
+    
+    run_validator(cls, request.FILES)
+    
     return JsonResponse({
         'validate': False
     })

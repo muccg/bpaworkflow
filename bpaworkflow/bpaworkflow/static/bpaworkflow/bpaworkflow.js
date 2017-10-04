@@ -151,6 +151,7 @@ $(document).ready(function() {
         e.preventDefault();
         $("#verify-form").fileupload('send', {
             files: filesList,
+            paramName: paramNames,
             formData: $("#verify-form").serializeArray()
         });
     });
