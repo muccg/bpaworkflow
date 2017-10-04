@@ -27,7 +27,16 @@ def run_validator(cls, files):
         # we don't want the project metadata to download, so we
         # clear the project metadata URLs
         cls.metadata_urls = []
-        with DownloadMetadata(cls, path=tempd) as dlmeta:
+        # fabricate metadata information for the files uploaded by the user
+        metadata_info = {}
+        for filename in os.listdir(tempd):
+            metadata_info[os.path.basename(filename)] = obj = {
+                "base_url": "https://example.com/does-not-exist/",
+            }
+            for k in cls.metadata_url_components:
+                obj[k] = 'BPAOPS-999'
+
+        with DownloadMetadata(cls, path=tempd, force_fetch=True, metadata_info=metadata_info) as dlmeta:
             logger.critical(dlmeta.meta)
             dlmeta.meta.get_packages()
             dlmeta.meta.get_resources()
