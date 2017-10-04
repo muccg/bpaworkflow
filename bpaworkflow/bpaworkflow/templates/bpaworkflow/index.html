@@ -24,6 +24,9 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.4/lodash.min.js"
     integrity="sha256-KteOoEtQ75FeAFFOTJZlvNt0iJ8NMusVDESd5jlwKEQ= sha384-+VyieUXwWQSImpRIFhlRJNe2KeZblzwXEF8LsYAO/cYlQdDG2SdJaky4Ud0sdVup sha512-coj002JZWtDMvnYzDgRXBzWlrEiS/EW2SNAYs0SVSDf62RSZ7ygs0leIGAjMiwe8cQRfqwrInDlHYsUSTDTPjQ=="
     crossorigin="anonymous"></script>
+    <script src="{% static 'bpaworkflow/jquery.ui.widget.js' %}"></script>
+    <script src="{% static 'bpaworkflow/jquery.iframe-transport.js' %}"></script>
+    <script src="{% static 'bpaworkflow/jquery.fileupload.js' %}"></script>
     
     <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/common.css' %}"/>
     <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/bpaworkflow.css' %}"/>
@@ -42,12 +45,12 @@
             </div>
         </header>
         <div class="hide container" id="error-bar"></div>
-
+        
         <div class="container-fluid">
-
+            
             <div class="row">
                 <div class="col-md-3"></div>
-                <form class="form-horizontal col-md-6">
+                <form class="form-horizontal col-md-6" id="fileupload" action="example" method="POST" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="project" class="col-sm-2 control-label">Project</label>
                         <div class="col-sm-10">
@@ -60,12 +63,32 @@
                             <select id="importer" class="form-control"></select>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="md5" class="col-sm-2 control-label">Submission sheet</label>
+                        <div class="col-sm-10">
+                            <div id="xlsx-file">
+                                <input type="file" class="file-upload" name="xlsx" />
+                            </div>
+                            <div id="xlsx-done" class="form-control"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="md5" class="col-sm-2 control-label">MD5 Checksums</label>
+                        <div class="col-sm-10">
+                            <div id="md5-file">
+                                <input type="file" class="file-upload" name="md5" />
+                            </div>
+                            <div id="md5-done" class="form-control"></div>
+                        </div>
+                    </div>
+                    <div class="form-group text-center">
+                        <button id="verify-btn" class="btn btn-primary">Verify</button>
+                        <button id="reset-btn" class="btn btn-warning">Reset</button>
+                    </div>
                 </form>
                 <div class="col-md-3"></div>
             </div>
-
         </div>
-        
         
         {% csrf_token %}
     </div>
