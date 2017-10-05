@@ -1,6 +1,6 @@
 import os
 import logging
-from bpaingest.metadata import DownloadMetadata
+from bpaingest.libs.excel_wrapper import ExcelWrapper
 
 from tempfile import TemporaryDirectory
 
@@ -21,8 +21,18 @@ def write_file(tempd, file_obj):
 
 
 def verify_spreadsheet(cls, fpath, metadata_info):
-    rows = cls.parse_spreadsheet(fpath, metadata_info)
-    logger.critical(len(rows))
+    kwargs = cls.spreadsheet['options']
+    wrapper = ExcelWrapper(
+        cls.spreadsheet['fields'],
+        fpath,
+        additional_context=metadata_info[os.path.basename(fpath)],
+        suggest_template=False,
+        **kwargs)
+    return wrapper.get_errors()
+
+
+def verify_md5file(cls, fpath, metadata_info):
+    return []
 
 
 def run_validator(cls, files):
@@ -42,12 +52,7 @@ def run_validator(cls, files):
             for k in cls.metadata_url_components:
                 obj[k] = 'BPAOPS-999'
 
-        verify_spreadsheet(cls, paths['xlsx'], metadata_info)
-
-        # we don't want the project metadata to download, so we
-        # clear the project metadata URLs
-        cls.metadata_urls = []
-
-        with DownloadMetadata(cls, path=tempd, force_fetch=True, metadata_info=metadata_info) as dlmeta:
-            logger.critical(dlmeta.meta)
-            dlmeta.meta.get_resources()
+        response = {}
+        response['xlsx'] = verify_spreadsheet(cls, paths['xlsx'], metadata_info)
+        response['md5'] = verify_md5file(cls, paths['md5'], metadata_info)
+    return response

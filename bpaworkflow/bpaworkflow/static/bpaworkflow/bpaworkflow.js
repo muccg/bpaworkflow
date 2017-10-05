@@ -146,13 +146,40 @@ $(document).ready(function() {
     });
     
     $('#verify-btn').click(function (e) {
-        console.log(filesList);
-        console.log(paramNames);
         e.preventDefault();
         $("#verify-form").fileupload('send', {
             files: filesList,
             paramName: paramNames,
+            dataType: 'json',
             formData: $("#verify-form").serializeArray()
+        }).complete(function(result) {
+            if (result.status != 200) {
+
+            }
+            var response_obj = result.responseJSON;
+            var target = $("#result");
+            target.empty();
+
+            var write_errors = function(topic, title, error_list) {
+                var elem = $("<div>");
+                target.append(elem);
+                elem.append($("<h3>").text(title));
+                var errors = response_obj[topic];
+                if (errors.length == 0) {
+                    var para = elem.append($("<p>"));
+                    para.append($('<span class="glyphicon glyphicon-ok">'));
+                    para.append($('<span>').text(' No errors.'));
+                } else {
+                    var ul = $("<ul>");
+                    $.each(errors, function(i, e) {
+                        ul.append($("<li>").text(e));
+                    });
+                    elem.append(ul);
+                }
+            };
+
+            write_errors('md5', 'MD5 file validation');
+            write_errors('xlsx', 'Submission sheet validation');
         });
     });
 });

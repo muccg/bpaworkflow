@@ -49,9 +49,6 @@ def validate(request):
         return JsonResponse({
             'error': 'invalid submission'
         })
-    
-    run_validator(cls, request.FILES)
-    
-    return JsonResponse({
-        'validate': False
-    })
+
+    response = run_validator(cls, request.FILES)
+    return JsonResponse(response)
