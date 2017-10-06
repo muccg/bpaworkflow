@@ -31,15 +31,15 @@ def verify_spreadsheet(cls, fpath, metadata_info):
     return wrapper.get_errors()
 
 
-def verify_md5file(cls, fpath, metadata_info):
-    return []
+def verify_md5file(cls, fpath):
+    p = cls.parse_md5file_unwrapped(fpath)
+    return ["File does not meet convention: `%s'" % t for t in p.no_match]
 
 
 def run_validator(cls, files):
     with TemporaryDirectory(prefix='bpaworkflow') as tempd:
         paths = {}
         for field_name, file_obj in files.items():
-            logger.critical('writing a file: %s' % repr(file_obj))
             paths[field_name] = write_file(tempd, file_obj)
 
         # fabricate metadata information for the files uploaded by the user
@@ -54,5 +54,5 @@ def run_validator(cls, files):
 
         response = {}
         response['xlsx'] = verify_spreadsheet(cls, paths['xlsx'], metadata_info)
-        response['md5'] = verify_md5file(cls, paths['md5'], metadata_info)
+        response['md5'] = verify_md5file(cls, paths['md5'])
     return response
