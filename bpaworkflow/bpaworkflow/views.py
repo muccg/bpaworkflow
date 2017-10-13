@@ -14,6 +14,15 @@ logger = logging.getLogger("rainbow")
 project_info = ProjectInfo()
 
 
+def metadata_verifyable(cls):
+    """
+    `cls` uses common constructs which allow us to verify
+    the spreadsheet and MD5 file
+    """
+    print("can verify: ", cls)
+    return hasattr(cls, "spreadsheet") and hasattr(cls, "md5")
+
+
 class WorkflowIndex(TemplateView):
     template_name = 'bpaworkflow/index.html'
     ckan_base_url = settings.CKAN_SERVERS[0]['base_url']
@@ -30,7 +39,7 @@ def metadata(request):
     private API: given taxonomy constraints, return the possible options
     """
     by_organization = defaultdict(list)
-    for info in project_info.metadata_info:
+    for info in filter(lambda x: metadata_verifyable(x['cls']), project_info.metadata_info):
         obj = dict((t, info[t]) for t in ('slug', 'omics', 'technology', 'analysed', 'pool'))
         by_organization[info['organization']].append(obj)
     return JsonResponse({
@@ -45,7 +54,7 @@ def validate(request):
     private API: validate MD5 file, XLSX file for a given importer
     """
     cls = project_info.cli_options().get(request.POST['importer'])
-    if not cls:
+    if not cls or not metadata_verifyable(cls):
         return JsonResponse({
             'error': 'invalid submission'
         })
