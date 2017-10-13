@@ -23,7 +23,7 @@ if [ "$1" = 'releasetarball' ]; then
     git rev-parse HEAD > .version
     cat .version
     pip install --upgrade -r /app/requirements/runtime-requirements.txt
-    pip install 'git+ssh://git@bpaingest/muccg/bpa-ingest.git@4.0.1#egg=bpa-ingest'
+    pip install 'git+ssh://git@bpaingest/muccg/bpa-ingest.git@4.0.2#egg=bpa-ingest'
     pip install -e "${PROJECT_NAME}"
     set +x
 
