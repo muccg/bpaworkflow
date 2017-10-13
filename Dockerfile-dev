@@ -26,6 +26,7 @@ RUN env | sort
 
 # Add our python deps in multiple docker layers
 # hgvs was failing due to lack of nose, hence the order
+RUN pip install 'git+ssh://git@bpaingest/muccg/bpa-ingest.git@4.0.1#egg=bpa-ingest'
 COPY ./requirements/dev-requirements.txt /app/bpaworkflow/
 RUN pip install --upgrade -r bpaworkflow/dev-requirements.txt
 COPY ./requirements/test-requirements.txt /app/bpaworkflow/

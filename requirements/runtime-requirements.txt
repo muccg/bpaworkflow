@@ -21,4 +21,3 @@ django-bootstrap3==9.0.0
 django-extensions==1.8.1
 django-redis==4.8.0
 zipstream==1.1.4
-# https://github.com/muccg/bpa-ingest/archive/3.8.0.tar.gz
