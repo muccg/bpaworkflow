@@ -24,7 +24,7 @@ package_scripts = ["manage.py"]
 package_data = get_data_files()
 
 setup(name='bpaworkflow',
-      version='1.0.0',
+      version='1.0.2',
       description="BPA Workflow",
       author='Centre for Comparative Genomics',
       author_email='web@ccg.murdoch.edu.au',
