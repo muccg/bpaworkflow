@@ -50,6 +50,22 @@
             <div class="row">
                 <div class="col-md-3"></div>
                 <form class="form-horizontal col-md-6" id="verify-form" method="POST" enctype="multipart/form-data">
+                    <h1>BPA Data Portal - Upload verification system</h1>
+                    <p>
+                        Sequencing facilities providing data to BioPlatforms Australia can use this page to confirm
+                        that metadata requirements, and file naming conventions, have been followed. Any issues identified
+                        can then be addressed, prior to transfer of the data to BPA.
+                    </p>
+                    <p>
+                        Select the <strong>Project</strong> for which data has been generated, and then the <strong>Import type</strong>
+                        for the data being uploaded. This will be described by the -omics (e.g. genomics, transcriptomics, ...) and the
+                        sequencing technology in use.
+                    </p>
+                    <p>
+                        Select your submission sheet (an Excel file, XLSX format), and the MD5 checksum file (a text file of MD5
+                        checksums, in Linux or BSD/MacOS format), then press verify to validate your upload.
+                    </p>
+
                     <div class="form-group">
                         <label for="project" class="col-sm-2 control-label">Project</label>
                         <div class="col-sm-10">

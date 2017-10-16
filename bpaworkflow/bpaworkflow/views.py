@@ -19,7 +19,6 @@ def metadata_verifyable(cls):
     `cls` uses common constructs which allow us to verify
     the spreadsheet and MD5 file
     """
-    print("can verify: ", cls)
     return hasattr(cls, "spreadsheet") and hasattr(cls, "md5")
 
 

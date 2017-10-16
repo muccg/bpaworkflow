@@ -91,6 +91,7 @@ $(document).ready(function() {
         });
         filesList.length = 0;
         paramNames.length = 0;
+        $("#result").empty();
         validate_ui();
     }
     
