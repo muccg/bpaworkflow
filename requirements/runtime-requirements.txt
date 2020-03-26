@@ -8,7 +8,7 @@ ccg-django-utils==0.4.2
 ckanapi==4.0
 psycopg2==2.7.3
 pytz==2016.4
-requests==2.18.3
+requests==2.20.0
 six==1.10.0
 uwsgi==2.0.15
 uwsgitop==0.9
