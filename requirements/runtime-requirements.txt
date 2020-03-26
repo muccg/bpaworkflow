@@ -1,7 +1,7 @@
 Django==1.11.5
 Django-suit==0.2.25
 Unipath==1.1
-Werkzeug==0.11.10
+Werkzeug==0.15.3
 beautifulsoup4
 boto==2.40.0
 ccg-django-utils==0.4.2
