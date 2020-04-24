@@ -162,7 +162,7 @@ function _runserver() {
     set -x
     while true; do
         # shellcheck disable=SC2086
-        django-admin.py ${RUNSERVER_OPTS}
+        cd /app/bpaworkflow && poetry run django-admin.py ${RUNSERVER_OPTS}
         echo "oh no, runserver crashed: $!"
         sleep 5
     done
@@ -229,7 +229,7 @@ if [ "$1" = 'runtests' ]; then
     export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE}"_test
 
     set -x
-    exec django-admin.py test --noinput -v 3 bpaworkflow
+    cd /app/bpaworkflow && exec poetry run django-admin.py test --noinput -v 3 bpaworkflow
 fi
 
 # aloe entrypoint

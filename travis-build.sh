@@ -15,4 +15,5 @@ cp .env .env_local
 ./develop.sh build base
 ./develop.sh build builder
 ./develop.sh build dev
-./develop.sh run build lint
+
+poetry run black --check bpaworkflow

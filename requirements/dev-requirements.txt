@@ -1,5 +1,0 @@
-Werkzeug
-coverage
-django-discover-runner
-docutils
-flake8

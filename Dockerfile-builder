@@ -29,6 +29,8 @@ COPY docker-entrypoint-build.sh /app/docker-entrypoint-build.sh
 RUN mkdir -p /data \
     && /bin/chown bioplatforms:bioplatforms /data
 
+RUN pip install poetry
+
 VOLUME ["/data"]
 
 ENV HOME /data

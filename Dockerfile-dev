@@ -16,21 +16,9 @@ WORKDIR /app
 
 RUN env | sort
 
-# Add our python deps in multiple docker layers
-# hgvs was failing due to lack of nose, hence the order
-COPY ./requirements/dev-requirements.txt /app/bpaworkflow/
-RUN pip install --upgrade -r bpaworkflow/dev-requirements.txt
-COPY ./requirements/test-requirements.txt /app/bpaworkflow/
-RUN pip install --upgrade -r bpaworkflow/test-requirements.txt
-COPY ./requirements/runtime-requirements.txt /app/bpaworkflow/
-RUN pip install --upgrade -r bpaworkflow/runtime-requirements.txt
-COPY ./bpa-ingest/requirements.txt /app/bpaworkflow/bpaingest-requirements.txt
-RUN pip install --upgrade -r bpaworkflow/bpaingest-requirements.txt
-
 # Copy code and install the app
 COPY . /app
-RUN pip ${PIP_OPTS} install --upgrade -e bpaworkflow
-RUN pip ${PIP_OPTS} install --upgrade -e bpa-ingest
+RUN cd /app/bpaworkflow && poetry install
 
 EXPOSE 8000 9000 9001 9100 9101
 VOLUME ["/app", "/data"]

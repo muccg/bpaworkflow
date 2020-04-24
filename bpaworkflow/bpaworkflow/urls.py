@@ -7,7 +7,7 @@ from . import views
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$', views.WorkflowIndex.as_view()),
-    url(r'^private/api/v1/metadata$', views.metadata, name="metadata"),
-    url(r'^private/api/v1/validate$', views.validate, name="validate"),
+    url(r"^$", views.WorkflowIndex.as_view()),
+    url(r"^private/api/v1/metadata$", views.metadata, name="metadata"),
+    url(r"^private/api/v1/validate$", views.validate, name="validate"),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -23,12 +23,12 @@ def metadata_verifyable(cls):
 
 
 class WorkflowIndex(TemplateView):
-    template_name = 'bpaworkflow/index.html'
-    ckan_base_url = settings.CKAN_SERVER['base_url']
+    template_name = "bpaworkflow/index.html"
+    ckan_base_url = settings.CKAN_SERVER["base_url"]
 
     def get_context_data(self, **kwargs):
         context = super(WorkflowIndex, self).get_context_data(**kwargs)
-        context['ckan_base_url'] = settings.CKAN_SERVER['base_url']
+        context["ckan_base_url"] = settings.CKAN_SERVER["base_url"]
         return context
 
 
@@ -38,13 +38,23 @@ def metadata(request):
     private API: given taxonomy constraints, return the possible options
     """
     by_organization = defaultdict(list)
-    for info in filter(lambda x: metadata_verifyable(x['cls']), project_info.metadata_info):
-        obj = dict((t, info[t]) for t in ('slug', 'omics', 'technology', 'analysed', 'pool'))
-        by_organization[info['organization']].append(obj)
-    return JsonResponse({
-        'importers': by_organization,
-        'projects': dict((t['name'], dict((s, t[s]) for s in ('name', 'title'))) for t in ORGANIZATIONS if t['name'] in by_organization)
-    })
+    for info in filter(
+        lambda x: metadata_verifyable(x["cls"]), project_info.metadata_info
+    ):
+        obj = dict(
+            (t, info[t]) for t in ("slug", "omics", "technology", "analysed", "pool")
+        )
+        by_organization[info["organization"]].append(obj)
+    return JsonResponse(
+        {
+            "importers": by_organization,
+            "projects": dict(
+                (t["name"], dict((s, t[s]) for s in ("name", "title")))
+                for t in ORGANIZATIONS
+                if t["name"] in by_organization
+            ),
+        }
+    )
 
 
 @require_http_methods(["POST"])
@@ -52,11 +62,9 @@ def validate(request):
     """
     private API: validate MD5 file, XLSX file for a given importer
     """
-    cls = project_info.cli_options().get(request.POST['importer'])
+    cls = project_info.cli_options().get(request.POST["importer"])
     if not cls or not metadata_verifyable(cls):
-        return JsonResponse({
-            'error': 'invalid submission'
-        })
+        return JsonResponse({"error": "invalid submission"})
 
     response = run_validator(cls, request.FILES)
     return JsonResponse(response)

@@ -16,10 +16,8 @@ def exceptions_to_error(verification_func):
         try:
             return verification_func(*args, **kwargs)
         except Exception as e:
-            return [
-                "Verification failed with an error: %s" % (repr(e))
-            ]
- 
+            return ["Verification failed with an error: %s" % (repr(e))]
+
     return wrapped_verification
 
 
@@ -29,7 +27,7 @@ def write_file(tempd, file_obj):
     if not name:
         raise Exception("invalid filename provided in upload")
     fpath = os.path.join(tempd, name)
-    with open(fpath, 'wb') as fd:
+    with open(fpath, "wb") as fd:
         for chunk in file_obj.chunks():
             fd.write(chunk)
     return fpath
@@ -37,18 +35,19 @@ def write_file(tempd, file_obj):
 
 @exceptions_to_error
 def verify_spreadsheet(cls, fpath, metadata_info):
-    kwargs = cls.spreadsheet['options']
+    kwargs = cls.spreadsheet["options"]
     try:
         wrapper = ExcelWrapper(
-            cls.spreadsheet['fields'],
+            cls.spreadsheet["fields"],
             fpath,
             additional_context=metadata_info[os.path.basename(fpath)],
             suggest_template=False,
-            **kwargs)
+            **kwargs
+        )
     except XLRDError as e:
         return [
             "The provided spreadsheet could not be read: %s" % str(e),
-            "Please ensure the spreadsheet is in Microsoft Excel (XLSX) format."
+            "Please ensure the spreadsheet is in Microsoft Excel (XLSX) format.",
         ]
     return wrapper.get_errors()
 
@@ -60,7 +59,7 @@ def verify_md5file(cls, fpath):
 
 
 def run_validator(cls, files):
-    with TemporaryDirectory(prefix='bpaworkflow') as tempd:
+    with TemporaryDirectory(prefix="bpaworkflow") as tempd:
         paths = {}
         for field_name, file_obj in files.items():
             paths[field_name] = write_file(tempd, file_obj)
@@ -73,9 +72,9 @@ def run_validator(cls, files):
                 "base_url": "https://example.com/does-not-exist/",
             }
             for k in cls.metadata_url_components:
-                obj[k] = 'BPAOPS-999'
+                obj[k] = "BPAOPS-999"
 
         response = {}
-        response['xlsx'] = verify_spreadsheet(cls, paths['xlsx'], metadata_info)
-        response['md5'] = verify_md5file(cls, paths['md5'])
+        response["xlsx"] = verify_spreadsheet(cls, paths["xlsx"], metadata_info)
+        response["md5"] = verify_md5file(cls, paths["md5"])
     return response
