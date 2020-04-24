@@ -1,0 +1,16 @@
+syntax:glob
+.#*
+*.log
+*.swp
+*.swo
+*~
+*.pyc
+*.html~
+*.js~
+.env_local
+media/
+.ropeproject
+.vscode
+build
+data/
+*.egg-info/

@@ -1,0 +1,51 @@
+version: '3'
+services:
+
+  base:
+    build:
+      context: ./
+      dockerfile: Dockerfile-base
+      args:
+        http_proxy:
+    image: bioplatformsaustralia/bpaworkflow-base
+
+  builder:
+    build:
+      context: ./
+      dockerfile: Dockerfile-builder
+      args:
+        http_proxy:
+    image: bioplatformsaustralia/bpaworkflow-builder
+    command: releasetarball
+    network_mode: host
+    environment:
+        BUILD_VERSION:
+        GIT_BRANCH:
+    volumes:
+      - ./build:/data
+
+  dev:
+    build:
+      context: ./
+      dockerfile: Dockerfile-dev
+      args:
+        http_proxy:
+    image: bioplatformsaustralia/bpaworkflow-dev
+    volumes:
+      - .:/app
+
+  prod:
+    build:
+      context: ./
+      dockerfile: Dockerfile-prod
+      args:
+        ARG_BUILD_VERSION: ${BUILD_VERSION}
+    image: bioplatformsaustralia/bpaworkflow:${BUILD_VERSION}
+
+  lint:
+    image: bioplatformsaustralia/python-lint:python3
+    working_dir: /app/bpaworkflow
+    volumes:
+      - ./:/app
+    command:
+      - flake8

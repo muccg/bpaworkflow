@@ -1,0 +1,62 @@
+import logging
+from collections import defaultdict
+from django.conf import settings
+from django.views.decorators.http import require_http_methods
+from django.views.generic import TemplateView
+from django.http import JsonResponse
+
+from bpaingest.projects import ProjectInfo
+from bpaingest.organizations import ORGANIZATIONS
+from .validate import run_validator
+
+
+logger = logging.getLogger("rainbow")
+project_info = ProjectInfo()
+
+
+def metadata_verifyable(cls):
+    """
+    `cls` uses common constructs which allow us to verify
+    the spreadsheet and MD5 file
+    """
+    return hasattr(cls, "spreadsheet") and hasattr(cls, "md5")
+
+
+class WorkflowIndex(TemplateView):
+    template_name = 'bpaworkflow/index.html'
+    ckan_base_url = settings.CKAN_SERVER['base_url']
+
+    def get_context_data(self, **kwargs):
+        context = super(WorkflowIndex, self).get_context_data(**kwargs)
+        context['ckan_base_url'] = settings.CKAN_SERVER['base_url']
+        return context
+
+
+@require_http_methods(["GET"])
+def metadata(request):
+    """
+    private API: given taxonomy constraints, return the possible options
+    """
+    by_organization = defaultdict(list)
+    for info in filter(lambda x: metadata_verifyable(x['cls']), project_info.metadata_info):
+        obj = dict((t, info[t]) for t in ('slug', 'omics', 'technology', 'analysed', 'pool'))
+        by_organization[info['organization']].append(obj)
+    return JsonResponse({
+        'importers': by_organization,
+        'projects': dict((t['name'], dict((s, t[s]) for s in ('name', 'title'))) for t in ORGANIZATIONS if t['name'] in by_organization)
+    })
+
+
+@require_http_methods(["POST"])
+def validate(request):
+    """
+    private API: validate MD5 file, XLSX file for a given importer
+    """
+    cls = project_info.cli_options().get(request.POST['importer'])
+    if not cls or not metadata_verifyable(cls):
+        return JsonResponse({
+            'error': 'invalid submission'
+        })
+
+    response = run_validator(cls, request.FILES)
+    return JsonResponse(response)

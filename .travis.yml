@@ -1,0 +1,21 @@
+sudo: required
+matrix:
+  fast_finish: true
+services:
+- docker
+before_install:
+- docker pull bioplatformsaustralia/bioplatforms-composer
+script:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- chmod 755 ~/.docker
+- chmod 644 ~/.docker/config.json
+- export "GIT_BRANCH=$TRAVIS_BRANCH"
+- test x"$TRAVIS_PULL_REQUEST_BRANCH" != x"" && export "GIT_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH" || echo "This build is not a PR."
+- export "BRANCH_NAME=$GIT_BRANCH"
+- ./travis-build.sh
+- ./travis-prodbuild.sh
+
+env:
+  global:
+    - DOCKER_USERNAME: gbowland
+    - secure: "ogAkQnePL2vMHSv70u5INnxDYSrLa6JGqWHVrbO+UQSn7s5KO/ZNXIvsX3s8NcUuoHzUr5EIqJN4NFShJnT4odOE5TgL4B9ktbqUUiRy71t/kl01BVa3lw8X4vIXhHnmWcCAV6BmaPsJcePKIKfFZKHkJgtl9PyJ8/5d0RB84YQdnsQWzfL4UCQaspy8tJMdHmxwYKgUNK/L7y1jw1lkcJKPTJwHfl3fJgp1IiLAx7Ap1s0w04+fy+xEVYbgp/lOG+XuDuYHG4THkhirUhLZxaAuED1TZe8/lCL0isW+1Y2FydO1YngzQGpYEiv5Olaazc35LZqkF8sNMnhaTSBEOXkeor/+qm2Cwz1jq8fADAPiuzMHhLwNDEpdLexo7hnQWiFRWdZiC+hjphQ+ZNs/jltmqPTiImxJpBvEnfKLUx60+Psxl6ne5Ta2NiaV4K3hcA1vadjhFRRfUTxKIL10DMPIveIMpYmXzZ9Av6zfW2qkn9PgL3uoJQdV5GP01sJzjJ1kW5gUhhhrUdN5GtiBQxmI2fh2Y9eTZL+UrMCPpLSfouh8CanOIYDpcvMfnhcUeUfeWK7ynS9Kwvh3uBR4+/nfwcKZTEa9sD8pFX5/wZ7VZEJec7lR1nKQnZZf6VbhBzhX89EyEIsGJSiiCITrnYO9F7wUcChoNlOJLM5Nksc="
