@@ -16,4 +16,5 @@ cp .env .env_local
 ./develop.sh build builder
 ./develop.sh build dev
 
-poetry run black --check bpaworkflow
+pip install poetry
+(cd bpaworkflow && poetry install && poetry run black --check .)
