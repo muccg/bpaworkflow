@@ -20,10 +20,11 @@ if [ "$1" = 'releasetarball' ]; then
     set -x
     cd /app
     git clone --depth=1 --branch="${GIT_BRANCH}" "${PROJECT_SOURCE}" .
+    git submodule init
+    git submodule update
     git rev-parse HEAD > .version
     cat .version
-    pip install --upgrade -r /app/requirements/runtime-requirements.txt
-    pip install -e "${PROJECT_NAME}"
+    ( cd /app/bpaworkflow && poetry install )
     set +x
 
     # vars for creating release tarball
