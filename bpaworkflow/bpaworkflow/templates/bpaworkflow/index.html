@@ -52,22 +52,26 @@
                 <form class="form-horizontal col-md-8" id="verify-form" method="POST" enctype="multipart/form-data">
                     <h1>Upload verification system</h1>
                     <p>
-                        Sequencing facilities providing data to BioPlatforms Australia can use this page to confirm
-                        that metadata requirements, and file naming conventions, have been followed. Any issues
-                        identified
-                        can then be addressed, prior to transfer of the data to Bioplatforms.
+                        Please use this system to validate all datasets, prior to transfer to Bioplatforms Australia.
+                        By uploading the submission spreadsheet and MD5 checksum file for the transfer, this system is
+                        able to perform the following checks:
+                    </p>
+                    <ul>
+                        <li>Filenames are formatted according to Bioplatforms Australia specifications</li>
+                        <li>The submission spreadsheet uses the correct template:</li>
+                        <ul>
+                            <li>columns are named correctly</li>
+                            <li>there are no unexpected spreadsheet columns</li>
+                        </ul>
+                    </ul>
+                    <p>
+                        These checks are being progressively expanded.
                     </p>
                     <p>
-                        Select the <strong>Project</strong> for which data has been generated, and then the
-                        <strong>Import type</strong>
-                        for the data being uploaded. This will be described by the -omics (e.g. genomics,
-                        transcriptomics, ...) and the
-                        sequencing technology in use.
-                    </p>
-                    <p>
-                        Select your submission sheet (an Excel file, XLSX format), and the MD5 checksum file (a text
-                        file of MD5
-                        checksums, in Linux or BSD/MacOS format), then press verify to validate your upload.
+                        In order to validate a data transfer, you must be specify the 'project' and 'data type', and
+                        then upload the submission spreadsheet (Excel file, XLSX format), along with the MD5 checksum
+                        file.
+                        Click to validate: your results will be returned shortly.
                     </p>
 
                     <div class="form-group">
@@ -77,13 +81,13 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="importer" class="col-sm-2 control-label">Import type</label>
+                        <label for="importer" class="col-sm-2 control-label">Data type</label>
                         <div class="col-sm-10">
                             <select name="importer" id="importer" class="form-control"></select>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="md5" class="col-sm-2 control-label">Submission sheet</label>
+                        <label for="md5" class="col-sm-2 control-label">Submission spreadsheet</label>
                         <div class="col-sm-10">
                             <div id="xlsx-file">
                                 <input type="file" name="xlsx" />
@@ -101,7 +105,7 @@
                         </div>
                     </div>
                     <div class="form-group text-center">
-                        <button id="verify-btn" class="btn btn-primary">Verify</button>
+                        <button id="verify-btn" class="btn btn-primary">Validate</button>
                         <button id="reset-btn" class="btn btn-warning">Reset</button>
                     </div>
                     {% csrf_token %}
