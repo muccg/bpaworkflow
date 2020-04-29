@@ -3,42 +3,45 @@
 {% load static %}
 
 <html lang="en">
+
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     {% block head_meta_viewport %}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=11">
     {% endblock %}
-    
+
     <title>Bioplatforms Workflow Facility</title>
     {% load bootstrap3 %}
-    
+
     {% bootstrap_css %}
     {% bootstrap_javascript jquery=True %}
-    
+
     <link rel="icon" href="{% static 'bpa-logos/favicon.ico' %}" type="image/x-icon">
-    
+
     <script src="{% static 'bpaworkflow/bpaworkflow.js' %}"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.4/lodash.min.js"
-    integrity="sha256-KteOoEtQ75FeAFFOTJZlvNt0iJ8NMusVDESd5jlwKEQ= sha384-+VyieUXwWQSImpRIFhlRJNe2KeZblzwXEF8LsYAO/cYlQdDG2SdJaky4Ud0sdVup sha512-coj002JZWtDMvnYzDgRXBzWlrEiS/EW2SNAYs0SVSDf62RSZ7ygs0leIGAjMiwe8cQRfqwrInDlHYsUSTDTPjQ=="
-    crossorigin="anonymous"></script>
+        integrity="sha256-KteOoEtQ75FeAFFOTJZlvNt0iJ8NMusVDESd5jlwKEQ= sha384-+VyieUXwWQSImpRIFhlRJNe2KeZblzwXEF8LsYAO/cYlQdDG2SdJaky4Ud0sdVup sha512-coj002JZWtDMvnYzDgRXBzWlrEiS/EW2SNAYs0SVSDf62RSZ7ygs0leIGAjMiwe8cQRfqwrInDlHYsUSTDTPjQ=="
+        crossorigin="anonymous"></script>
     <script src="{% static 'bpaworkflow/jquery.ui.widget.js' %}"></script>
     <script src="{% static 'bpaworkflow/jquery.iframe-transport.js' %}"></script>
     <script src="{% static 'bpaworkflow/jquery.fileupload.js' %}"></script>
-    
-    <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/common.css' %}"/>
-    <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/bpaworkflow.css' %}"/>
-    
+
+    <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/common.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'bpaworkflow/bpaworkflow.css' %}" />
+
     {% block extra_head %}
     {% endblock %}
-    
+
 </head>
+
 <body>
     <div id="wrap">
         <header class="navbar navbar-static-top">
             <div class="container">
                 <div class="text-center">
-                    <a class="logo" href="/"><img src="{% static 'bpa-logos/BIO-RGB_Full-POS_Portal.png' %}" alt="Bioplatform Australia" /></a>
+                    <a class="logo" href="/"><img src="{% static 'bpa-logos/BIO-RGB_Full-POS_Portal.png' %}"
+                            alt="Bioplatform Australia" /></a>
                 </div>
             </div>
         </header>
@@ -50,16 +53,20 @@
                     <h1>Upload verification system</h1>
                     <p>
                         Sequencing facilities providing data to BioPlatforms Australia can use this page to confirm
-                        that metadata requirements, and file naming conventions, have been followed. Any issues identified
+                        that metadata requirements, and file naming conventions, have been followed. Any issues
+                        identified
                         can then be addressed, prior to transfer of the data to Bioplatforms.
                     </p>
                     <p>
-                        Select the <strong>Project</strong> for which data has been generated, and then the <strong>Import type</strong>
-                        for the data being uploaded. This will be described by the -omics (e.g. genomics, transcriptomics, ...) and the
+                        Select the <strong>Project</strong> for which data has been generated, and then the
+                        <strong>Import type</strong>
+                        for the data being uploaded. This will be described by the -omics (e.g. genomics,
+                        transcriptomics, ...) and the
                         sequencing technology in use.
                     </p>
                     <p>
-                        Select your submission sheet (an Excel file, XLSX format), and the MD5 checksum file (a text file of MD5
+                        Select your submission sheet (an Excel file, XLSX format), and the MD5 checksum file (a text
+                        file of MD5
                         checksums, in Linux or BSD/MacOS format), then press verify to validate your upload.
                     </p>
 
@@ -112,28 +119,24 @@
                 <div class="col-md-3"></div>
             </div>
         </div>
-        
+
     </div>
-    
-    <header class="navbar navbar-static-top">
-        <div class="container">
 
-            <div class="text-center">
-                <a class="logo" href="/"><img src="{% static 'bpa-logos/BIO-RGB_Full-POS_Portal.png' %}" alt="Bioplatform Australia" /></a>
-            </div>
-
+    <footer class="site-footer">
+        <div class="site-footer-links container-fluid">
+            <a href="http://www.bioplatforms.com">Operated by Bioplatforms Australia</a>
+            <a href="mailto:help@bioplatforms.com">Contact</a>
         </div>
+        <div class="site-footer-logo container-fluid">
+            <span><a href="https://www.bioplatforms.com"><img class="footer-logos"
+                        src="{% static 'bpa-logos/BIO-RGB_Large-NEGTRANS.png' %}"
+                        alt="Bioplatforms Australia" /></a></span>
+            <span style="padding-left: 30px;"><a
+                    href="https://www.education.gov.au/national-collaborative-research-infrastructure-strategy-ncris"><img
+                        class="footer-logos" src="{% static 'bpa-logos/ncris-footer.png' %}" /></a></span>
+        </div>
+    </footer>
 
-        {% if DEBUG_ONLY_VIEW %}
-            <div class="alert alert-warning text-center">
-                This page should be accessible only in <strong>DEBUG</strong> mode.
-            </div>
-        {% endif %}
-
-        {% block rendered_breadcrumbs %}
-        {% endblock %}
-    </header> 
-    
     <script>
         window.bpa_workflow_config = {
             'ckan_base_url': "{{ ckan_base_url }}",
@@ -142,9 +145,10 @@
         };
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
-            $('[data-toggle="popover"]').popover({html:true})
+            $('[data-toggle="popover"]').popover({ html: true })
         })
     </script>
-    
+
 </body>
+
 </html>
