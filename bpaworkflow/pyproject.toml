@@ -21,10 +21,12 @@ colorlog = "^4.1.0"
 django_extensions = "^2.2.9"
 psycopg2 = "^2.8.5"
 django_redis = "^4.11.0"
+celery = "^4.4.2"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
 tox = "^3.14.6"
+flake8 = "^3.7.9"
 
 [tool.tox]
 legacy_tox_ini = """

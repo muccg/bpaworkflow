@@ -358,6 +358,20 @@ DEFAULT_PAGINATION = 50
 # constructing redirect URLS.
 USE_X_FORWARDED_HOST = env.get("use_x_forwarded_host", True)
 
+# Celery
+
+CELERY_BROKER_URL = env.get("CELERY_BROKER_URL", "redis://cache")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+# CELERY_TASK_IGNORE_RESULT = True
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_DATADIR = "/data"
+
+# End Celery
 
 # cache using redis
 CACHES = {

@@ -1,40 +1,55 @@
-version: '3'
+version: "3"
 
 services:
-    db:
-      image: mdillon/postgis:10
-      environment:
-        - POSTGRES_USER=webapp
-        - POSTGRES_PASSWORD=webapp
-      ports:
-        - "5432"
-      volumes:
-        - .:/app
-        - ./data/dev:/data
-        - dbdata:/var/lib/postgresql/data/
+  db:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=webapp
+      - POSTGRES_PASSWORD=webapp
+    ports:
+      - "5432"
+    volumes:
+      - .:/app
+      - ./data/dev:/data
+      - dbdata:/var/lib/postgresql/data/
 
-    cache:
-      image: redis:3-alpine
+  cache:
+    image: redis:3-alpine
 
-    runserver:
-      image: bioplatformsaustralia/bpaworkflow-dev
-      env_file:
-        - .env_local
-      environment:
-        - WAIT_FOR_DB=1
-        - WAIT_FOR_CACHE=1
-      volumes:
-        - .:/app
-        - ./data/dev:/data
-      ports:
-          - "8000:8000"
-      depends_on:
-        - db
-        - cache
-      networks:
-        default:
-          aliases:
-            - web
+  runserver:
+    image: bioplatformsaustralia/bpaworkflow-dev
+    env_file:
+      - .env_local
+    environment:
+      - WAIT_FOR_DB=1
+      - WAIT_FOR_CACHE=1
+    volumes:
+      - .:/app
+      - ./data/dev:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - cache
+    networks:
+      default:
+        aliases:
+          - web
+
+  celeryworker:
+    image: bioplatformsaustralia/bpaworkflow-dev
+    command: celery_worker
+    volumes:
+      - .:/app
+      - ./data/dev:/data
+    env_file:
+      - .env_local
+    environment:
+      - WAIT_FOR_DB=1
+      - WAIT_FOR_CACHE=1
+    depends_on:
+      - db
+      - cache
 
 volumes:
   dbdata:

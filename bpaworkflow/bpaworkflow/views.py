@@ -3,11 +3,12 @@ from collections import defaultdict
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
+from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
 from bpaingest.projects import ProjectInfo
 from bpaingest.organizations import ORGANIZATIONS
-from .validate import run_validator
+from . import tasks
 
 
 logger = logging.getLogger("rainbow")
@@ -62,9 +63,28 @@ def validate(request):
     """
     private API: validate MD5 file, XLSX file for a given importer
     """
+
     cls = project_info.cli_options().get(request.POST["importer"])
     if not cls or not metadata_verifyable(cls):
         return JsonResponse({"error": "invalid submission"})
 
-    response = run_validator(cls, request.FILES)
-    return JsonResponse(response)
+    submission_id = tasks.invoke_validation(cls, request.FILES)
+    return JsonResponse({"submission_id": submission_id})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def status(request):
+    """
+    private API: get the current status of a validation task
+    """
+    submission_id = request.POST["submission_id"]
+    submission = tasks.TaskState(submission_id)
+    return JsonResponse(
+        {
+            "submission_id": submission_id,
+            "complete": submission.complete,
+            "md5": submission.md5,
+            "xlsx": submission.xlsx,
+        }
+    )
