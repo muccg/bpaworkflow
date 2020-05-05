@@ -39,7 +39,7 @@ class TaskState:
 
 
 @shared_task(bind=True)
-def validate_task(self, submission_id):
+def validate_spreadsheet(self, submission_id):
     submission = TaskState(submission_id)
     # retrieved from Redis, so just do it once
     cls = submission.cls
@@ -47,9 +47,25 @@ def validate_task(self, submission_id):
     metadata_info = submission.metadata_info
     # these are fairly quick
     submission.xlsx = verify_spreadsheet(cls, paths["xlsx"], metadata_info)
+    return submission_id
+
+
+@shared_task(bind=True)
+def validate_md5(self, submission_id):
+    submission = TaskState(submission_id)
+    # retrieved from Redis, so just do it once
+    cls = submission.cls
+    paths = submission.paths
+    # these are fairly quick
     submission.md5 = verify_md5file(cls, paths["md5"])
-    # we are done for now
+    return submission_id
+
+
+@shared_task(bind=True)
+def validate_complete(self, submission_id):
+    submission = TaskState(submission_id)
     submission.complete = True
+    return submission_id
 
 
 def invoke_validation(cls, files):
@@ -88,5 +104,7 @@ def invoke_validation(cls, files):
     state.path = tempfile.mkdtemp(prefix="bpaworkflow-", dir=settings.CELERY_DATADIR)
     state.paths = write_files(state.path)
     state.metadata_info = fabricate_metadata_info(state.path)
-    validate_task.delay(state.submission_id)
+    (validate_spreadsheet.s() | validate_md5.s() | validate_complete.s()).delay(
+        state.submission_id
+    )
     return state.submission_id

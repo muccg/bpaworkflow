@@ -148,6 +148,9 @@ $(document).ready(function () {
 
     $('#verify-btn').click(function (e) {
         e.preventDefault();
+        var target = $("#result");
+        target.empty();
+        target.append('<p>Validating, please wait...</p>');
         $("#verify-form").fileupload('send', {
             files: filesList,
             paramName: paramNames,
