@@ -7,6 +7,8 @@ import redis
 import uuid
 from .validate import verify_md5file, verify_spreadsheet
 from django.conf import settings
+from collections import defaultdict
+from bpaingest.metadata import DownloadMetadata
 
 logger = logging.getLogger(__name__)
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
@@ -62,6 +64,32 @@ def validate_md5(self, submission_id):
 
 
 @shared_task(bind=True)
+def validate_bpaingest_json(self, submission_id):
+    submission = TaskState(submission_id)
+    state = defaultdict(lambda: defaultdict(list))
+
+    # retrieved from Redis, so just do it once
+    cls = submission.cls
+    paths = submission.paths
+    metadata_info = submission.metadata_info
+
+    data_type_meta = {}
+    # download metadata for all project types and aggregate metadata keys
+    with DownloadMetadata(cls) as dlmeta:
+        meta = dlmeta.meta
+        data_type = meta.ckan_data_type
+        data_type_meta[data_type] = meta
+        state[data_type]["packages"] += meta.get_packages()
+        state[data_type]["resources"] += meta.get_resources()
+
+    for data_type in state:
+        state[data_type]["packages"].sort(key=lambda x: x["id"])
+        state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
+
+    return submission_id
+
+
+@shared_task(bind=True)
 def validate_complete(self, submission_id):
     submission = TaskState(submission_id)
     submission.complete = True
@@ -104,7 +132,10 @@ def invoke_validation(cls, files):
     state.path = tempfile.mkdtemp(prefix="bpaworkflow-", dir=settings.CELERY_DATADIR)
     state.paths = write_files(state.path)
     state.metadata_info = fabricate_metadata_info(state.path)
-    (validate_spreadsheet.s() | validate_md5.s() | validate_complete.s()).delay(
-        state.submission_id
-    )
+    (
+        validate_spreadsheet.s()
+        | validate_md5.s()
+        | validate_bpaingest_json.s()
+        | validate_complete.s()
+    ).delay(state.submission_id)
     return state.submission_id
