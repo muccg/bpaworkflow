@@ -5,6 +5,7 @@ import tempfile
 import logging
 import redis
 import uuid
+import json
 from .validate import verify_md5file, verify_spreadsheet
 from django.conf import settings
 from collections import defaultdict
@@ -46,9 +47,9 @@ def validate_spreadsheet(self, submission_id):
     # retrieved from Redis, so just do it once
     cls = submission.cls
     paths = submission.paths
-    metadata_info = submission.metadata_info
+    fake_metadata_info = submission.fake_metadata_info
     # these are fairly quick
-    submission.xlsx = verify_spreadsheet(cls, paths["xlsx"], metadata_info)
+    submission.xlsx = verify_spreadsheet(cls, paths["xlsx"], fake_metadata_info)
     return submission_id
 
 
@@ -66,25 +67,43 @@ def validate_md5(self, submission_id):
 @shared_task(bind=True)
 def validate_bpaingest_json(self, submission_id):
     submission = TaskState(submission_id)
-    state = defaultdict(lambda: defaultdict(list))
 
     # retrieved from Redis, so just do it once
     cls = submission.cls
-    paths = submission.paths
-    metadata_info = submission.metadata_info
+    fake_metadata_info = submission.fake_metadata_info
 
-    data_type_meta = {}
-    # download metadata for all project types and aggregate metadata keys
-    with DownloadMetadata(cls) as dlmeta:
-        meta = dlmeta.meta
-        data_type = meta.ckan_data_type
-        data_type_meta[data_type] = meta
-        state[data_type]["packages"] += meta.get_packages()
-        state[data_type]["resources"] += meta.get_resources()
+    def unchanged_metadata():
+        return DownloadMetadata(cls)
 
-    for data_type in state:
-        state[data_type]["packages"].sort(key=lambda x: x["id"])
-        state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
+    def new_metadata():
+        dlmeta = DownloadMetadata(cls)
+        # splice together the metadata from the archive with the synthetic metadata
+        with open(dlmeta.info_json) as fd:
+            metadata_info = json.load(fd)
+        metadata_info.update(fake_metadata_info)
+        with open(dlmeta.info_json, "w") as fd:
+            json.dump(metadata_info, fd)
+        # recreate the class instance with the updated metadata
+        dlmeta.meta = dlmeta.make_meta()
+        return dlmeta
+
+    def run(meta_maker):
+        state = defaultdict(lambda: defaultdict(list))
+        # download metadata for all project types and aggregate metadata keys
+        with meta_maker() as dlmeta:
+            meta = dlmeta.meta
+            data_type = meta.ckan_data_type
+            state[data_type]["packages"] += meta.get_packages()
+            state[data_type]["resources"] += meta.get_resources()
+
+        for data_type in state:
+            state[data_type]["packages"].sort(key=lambda x: x["id"])
+            state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
+
+        return state
+
+    prior_state = run(unchanged_metadata)
+    post_state = run(new_metadata)
 
     return submission_id
 
@@ -123,7 +142,7 @@ def invoke_validation(cls, files):
                 "base_url": "https://example.com/does-not-exist/",
             }
             for k in cls.metadata_url_components:
-                obj[k] = "BPAOPS-999"
+                obj[k] = "BPAOPS-99999"
         return metadata_info
 
     state = TaskState.create()
@@ -131,7 +150,7 @@ def invoke_validation(cls, files):
     state.complete = False
     state.path = tempfile.mkdtemp(prefix="bpaworkflow-", dir=settings.CELERY_DATADIR)
     state.paths = write_files(state.path)
-    state.metadata_info = fabricate_metadata_info(state.path)
+    state.fake_metadata_info = fabricate_metadata_info(state.path)
     (
         validate_spreadsheet.s()
         | validate_md5.s()

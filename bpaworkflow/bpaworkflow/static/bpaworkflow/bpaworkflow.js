@@ -196,6 +196,10 @@ $(document).ready(function () {
                     url: window.bpa_workflow_config['status_endpoint'],
                     data: { 'submission_id': submission_id },
                 }).done(function (response_obj) {
+                    if (result.status != 200) {
+                        // TODO: display an error message
+                        return;
+                    }
                     display_result(response_obj);
                     if (response_obj['complete'] === false) {
                         setTimeout(poll_result, 1000);
