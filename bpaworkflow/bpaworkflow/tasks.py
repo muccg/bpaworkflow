@@ -53,8 +53,6 @@ def validate_task(self, submission_id):
 
 
 def invoke_validation(cls, files):
-    logger.debug("<<< validate")
-
     def write_file(tempd, file_obj):
         # be a bit paranoid, normalise and strip any path components out
         name = os.path.basename(file_obj.name)
