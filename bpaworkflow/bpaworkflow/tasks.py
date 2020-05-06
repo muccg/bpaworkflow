@@ -3,6 +3,7 @@ import os
 import pickle
 import tempfile
 import logging
+import shutil
 import redis
 import uuid
 import json
@@ -71,12 +72,17 @@ def validate_bpaingest_json(self, submission_id):
     # retrieved from Redis, so just do it once
     cls = submission.cls
     fake_metadata_info = submission.fake_metadata_info
+    paths = submission.paths
 
     def unchanged_metadata():
         return DownloadMetadata(cls)
 
     def new_metadata():
+        # this will go ahead and download the existing metadata
         dlmeta = DownloadMetadata(cls)
+        # copy in the new metadata
+        for fpath in paths.values():
+            shutil.copy(fpath, os.path.join(dlmeta.path, os.path.basename(fpath)))
         # splice together the metadata from the archive with the synthetic metadata
         with open(dlmeta.info_json) as fd:
             metadata_info = json.load(fd)
