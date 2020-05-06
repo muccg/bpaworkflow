@@ -12,8 +12,18 @@ from django.conf import settings
 from collections import defaultdict
 from bpaingest.metadata import DownloadMetadata
 
-logger = logging.getLogger(__name__)
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
+
+
+def make_logger(name):
+    tmpf = tempfile.mktemp("bpaingest-log-", dir=settings.CELERY_DATADIR)
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    handler = logging.FileHandler(tmpf)
+    fmt = logging.Formatter("[%(levelname)-7s] %(message)s")
+    handler.setFormatter(fmt)
+    logger.addHandler(handler)
+    return tmpf, logger
 
 
 class TaskState:
@@ -50,7 +60,8 @@ def validate_spreadsheet(self, submission_id):
     paths = submission.paths
     fake_metadata_info = submission.fake_metadata_info
     # these are fairly quick
-    submission.xlsx = verify_spreadsheet(cls, paths["xlsx"], fake_metadata_info)
+    logger = logging.getLogger("spreadsheet")
+    submission.xlsx = verify_spreadsheet(logger, cls, paths["xlsx"], fake_metadata_info)
     return submission_id
 
 
@@ -61,7 +72,8 @@ def validate_md5(self, submission_id):
     cls = submission.cls
     paths = submission.paths
     # these are fairly quick
-    submission.md5 = verify_md5file(cls, paths["md5"])
+    logger = logging.getLogger("md5")
+    submission.md5 = verify_md5file(logger, cls, paths["md5"])
     return submission_id
 
 
@@ -74,12 +86,12 @@ def validate_bpaingest_json(self, submission_id):
     fake_metadata_info = submission.fake_metadata_info
     paths = submission.paths
 
-    def unchanged_metadata():
-        return DownloadMetadata(cls)
+    def prior_metadata(logger):
+        return DownloadMetadata(logger, cls)
 
-    def new_metadata():
+    def post_metadata(logger):
         # this will go ahead and download the existing metadata
-        dlmeta = DownloadMetadata(cls)
+        dlmeta = DownloadMetadata(logger, cls)
         # copy in the new metadata
         for fpath in paths.values():
             shutil.copy(fpath, os.path.join(dlmeta.path, os.path.basename(fpath)))
@@ -90,13 +102,14 @@ def validate_bpaingest_json(self, submission_id):
         with open(dlmeta.info_json, "w") as fd:
             json.dump(metadata_info, fd)
         # recreate the class instance with the updated metadata
-        dlmeta.meta = dlmeta.make_meta()
+        dlmeta.meta = dlmeta.make_meta(logger)
         return dlmeta
 
-    def run(meta_maker):
+    def run(name, meta_maker):
+        logfile, logger = make_logger(name)
         state = defaultdict(lambda: defaultdict(list))
         # download metadata for all project types and aggregate metadata keys
-        with meta_maker() as dlmeta:
+        with meta_maker(logger) as dlmeta:
             meta = dlmeta.meta
             data_type = meta.ckan_data_type
             state[data_type]["packages"] += meta.get_packages()
@@ -106,10 +119,10 @@ def validate_bpaingest_json(self, submission_id):
             state[data_type]["packages"].sort(key=lambda x: x["id"])
             state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
 
-        return state
+        return logfile, state
 
-    prior_state = run(unchanged_metadata)
-    post_state = run(new_metadata)
+    prior_state = run("prior.{}".format(submission_id), prior_metadata)
+    post_state = run("post.{}".format(submission_id), post_metadata)
 
     return submission_id
 

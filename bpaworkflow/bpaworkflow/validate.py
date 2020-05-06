@@ -21,10 +21,11 @@ def exceptions_to_error(verification_func):
 
 
 @exceptions_to_error
-def verify_spreadsheet(cls, fpath, metadata_info):
+def verify_spreadsheet(logging, cls, fpath, metadata_info):
     kwargs = cls.spreadsheet["options"]
     try:
         wrapper = ExcelWrapper(
+            logger,
             cls.spreadsheet["fields"],
             fpath,
             additional_context=metadata_info[os.path.basename(fpath)],
@@ -40,6 +41,7 @@ def verify_spreadsheet(cls, fpath, metadata_info):
 
 
 @exceptions_to_error
-def verify_md5file(cls, fpath):
-    p = cls.parse_md5file_unwrapped(fpath)
+def verify_md5file(logger, cls, fpath):
+    instance = cls(logger, "/dev/null")
+    p = instance.parse_md5file_unwrapped(fpath)
     return ["File does not meet convention: `%s'" % t for t in p.no_match]
