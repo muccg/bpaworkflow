@@ -21,6 +21,7 @@ colorlog = "^4.1.0"
 django_extensions = "^2.2.9"
 django_redis = "^4.11.0"
 celery = "^4.4.2"
+psycopg2 = "^2.8.5"
 deepdiff = {extras = ["murmur"], version = "^4.3.2"}
 
 [tool.poetry.dev-dependencies]

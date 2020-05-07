@@ -7,6 +7,9 @@ import shutil
 import redis
 import uuid
 import json
+
+from deepdiff import DeepDiff
+
 from .validate import verify_md5file, verify_spreadsheet, verify_metadata
 from django.conf import settings
 from collections import defaultdict
@@ -169,6 +172,14 @@ def validate_bpaingest_json(self, submission_id):
                 fd.write(chunk)
         return fpath
 
+    def diff_json(json1, json2):
+        logger.debug('starting json diff run ...................')
+        ddiff = DeepDiff(json1, json2, ignore_order=True)
+        logger.info(ddiff)
+        logger.debug('completed json diff run ...................')
+
+
+
     def run(meta_maker):
         logger.debug('starting sub-task downloads run ...................')
         state = defaultdict(lambda: defaultdict(list))
@@ -209,7 +220,8 @@ def validate_bpaingest_json(self, submission_id):
         logger.debug('completed sub-task downloads run...................')
         # with open(args.filename, 'w') as fd:
         #     json.dump(state, fd, sort_keys=True, indent=2, separators=(',', ': '))
-        submission['json']['loaded'] = json.dumps(state, sort_keys=True, indent=2, separators=(',', ': '))
+        json_dump = json.dumps(state, sort_keys=True, indent=2, separators=(',', ': '))
+        diff_json(json_dump, submission['json']['posted'])
         return state
 
     logger.info('Task 3a..........starting prior state....')

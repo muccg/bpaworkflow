@@ -24,7 +24,7 @@ services:
       - WAIT_FOR_DB=1
       - WAIT_FOR_CACHE=1
     volumes:
-      - .:/app
+#      - .:/app
       - ./data/dev:/data
     ports:
       - "8000:8000"

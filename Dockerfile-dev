@@ -16,26 +16,17 @@ WORKDIR /app
 
 RUN env | sort
 
-#COPY pypoetry /data/.cache/pypoetry
 # Ensure changes to build doesn't re-install requirements
 WORKDIR /tmp/app
 COPY bpa-ingest /tmp/app/bpa-ingest
 COPY bpaworkflow/pyproject.toml bpaworkflow/poetry.lock /tmp/app/bpaworkflow/
-RUN pwd
-RUN ls -lhrta
-RUN ls -lhrta ..
 RUN cd /tmp/app/bpaworkflow && poetry install --no-root
 WORKDIR /app
-#RUN rm -rf /tmp/app
-#USER bioplatforms
-#WORKDIR /data
-#RUN echo 'test' && ls -lhrta /data
-#ADD ./data /data/
-
+RUN rm -rf /tmp/app
 # Copy code and install the app
 COPY . /app
 RUN cd /app/bpaworkflow && poetry install
-
+RUN cd /app/bpaworkflow && poetry add 'psycopg2'
 EXPOSE 8000 9000 9001 9100 9101
 VOLUME ["/app", "/data"]
 
