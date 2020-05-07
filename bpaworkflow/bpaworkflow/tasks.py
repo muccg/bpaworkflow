@@ -18,6 +18,7 @@ redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
 def make_file_logger(name):
     tmpf = tempfile.mktemp("bpaingest-log-", dir=settings.CELERY_DATADIR)
     logger = logging.getLogger(name)
+    logger.propagate = False
     logger.setLevel(logging.INFO)
     handler = logging.FileHandler(tmpf)
     fmt = logging.Formatter("[%(levelname)-7s] %(message)s")
