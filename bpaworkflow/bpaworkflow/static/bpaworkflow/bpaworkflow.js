@@ -146,6 +146,8 @@ $(document).ready(function () {
         reset_ui();
     });
 
+    window.poll_handler = null;
+
     $('#verify-btn').click(function (e) {
         e.preventDefault();
         var target = $("#result");
@@ -202,11 +204,17 @@ $(document).ready(function () {
                     }
                     display_result(response_obj);
                     if (response_obj['complete'] === false) {
-                        setTimeout(poll_result, 1000);
+                        if (window.poll_handler) {
+                            clearTimeout(window.poll_handler);
+                        }
+                        window.poll_handler = setTimeout(poll_result, 1000);
                     }
                 });
             }
-            setTimeout(poll_result, 1000);
+            if (window.poll_handler) {
+                clearTimeout(window.poll_handler);
+            }
+            window.poll_handler = setTimeout(poll_result, 1000);
         });
     });
 });
