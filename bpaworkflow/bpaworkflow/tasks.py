@@ -15,7 +15,7 @@ from bpaingest.metadata import DownloadMetadata
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
 
 
-def make_logger(name):
+def make_file_logger(name):
     tmpf = tempfile.mktemp("bpaingest-log-", dir=settings.CELERY_DATADIR)
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
@@ -106,7 +106,7 @@ def validate_bpaingest_json(self, submission_id):
         return dlmeta
 
     def run(name, meta_maker):
-        logfile, logger = make_logger(name)
+        logfile, logger = make_file_logger(name)
         state = defaultdict(lambda: defaultdict(list))
         # download metadata for all project types and aggregate metadata keys
         with meta_maker(logger) as dlmeta:
@@ -119,7 +119,12 @@ def validate_bpaingest_json(self, submission_id):
             state[data_type]["packages"].sort(key=lambda x: x["id"])
             state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
 
-        return logfile, state
+        with open(logfile) as fd:
+            log = fd.read()
+
+        os.unlink(logfile)
+
+        return log, state
 
     prior_state = run("prior.{}".format(submission_id), prior_metadata)
     post_state = run("post.{}".format(submission_id), post_metadata)
@@ -131,6 +136,10 @@ def validate_bpaingest_json(self, submission_id):
 def validate_complete(self, submission_id):
     submission = TaskState(submission_id)
     submission.complete = True
+    paths = submission.paths
+    for fpath in paths.values():
+        os.unlink(fpath)
+    os.rmdir(submission.path)
     return submission_id
 
 
