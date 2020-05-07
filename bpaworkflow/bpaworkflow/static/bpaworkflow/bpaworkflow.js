@@ -85,7 +85,7 @@ $(document).ready(function () {
 
     var reset_ui = function () {
         var form = $("#verify-form")[0].reset();
-        $.each(['md5', 'xlsx'], function (i, t) {
+        $.each(['md5', 'xlsx', 'json'], function (i, t) {
             $('#' + t + '-file').show();
             $('#' + t + '-done').hide();
         });
@@ -185,6 +185,7 @@ $(document).ready(function () {
 
                 write_errors('md5', 'MD5 file validation');
                 write_errors('xlsx', 'Submission sheet validation');
+                write_errors('json', 'Json file validation');
             };
 
             var response_obj = result.responseJSON;

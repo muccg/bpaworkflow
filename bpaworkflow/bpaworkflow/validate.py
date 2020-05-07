@@ -43,3 +43,14 @@ def verify_spreadsheet(cls, fpath, metadata_info):
 def verify_md5file(cls, fpath):
     p = cls.parse_md5file_unwrapped(fpath)
     return ["File does not meet convention: `%s'" % t for t in p.no_match]
+
+
+@exceptions_to_error
+def verify_metadata(meta):
+    logger.debug('inside next meta maker routine....')
+    # logger.info('meta is : %s' % pprint(meta))
+    # logger.info('data type is {}'.format(data_type))
+    packages = meta.get_packages()
+    resources = meta.get_resources()
+    logger.debug('inside next meta maker routine completed.....')
+    return packages, resources

@@ -87,10 +87,10 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="md5" class="col-sm-2 control-label">Submission spreadsheet</label>
+                        <label for="xlsx" class="col-sm-2 control-label">Submission spreadsheet</label>
                         <div class="col-sm-10">
                             <div id="xlsx-file">
-                                <input type="file" name="xlsx" />
+                                <input type="file" name="xlsx" id="xlsx"/>
                             </div>
                             <div id="xlsx-done" class="form-control"></div>
                         </div>
@@ -99,11 +99,21 @@
                         <label for="md5" class="col-sm-2 control-label">MD5 Checksums</label>
                         <div class="col-sm-10">
                             <div id="md5-file">
-                                <input type="file" name="md5" />
+                                <input type="file" name="md5" id="md5"/>
                             </div>
                             <div id="md5-done" class="form-control"></div>
                         </div>
                     </div>
+                     <div class="form-group">
+                        <label for="json" class="col-sm-2 control-label">Json data dump validator</label>
+                        <div class="col-sm-10">
+                            <div id="json-file">
+                                <input type="file" name="json" id="json"/>
+                            </div>
+                            <div id="json-done" class="form-control"></div>
+                        </div>
+                    </div>
+
                     <div class="form-group text-center">
                         <button id="verify-btn" class="btn btn-primary">Validate</button>
                         <button id="reset-btn" class="btn btn-warning">Reset</button>
