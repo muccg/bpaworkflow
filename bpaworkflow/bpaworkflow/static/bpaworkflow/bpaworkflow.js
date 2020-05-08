@@ -73,7 +73,7 @@ $(document).ready(function () {
 
     var validate_ui = function () {
         var ok = false;
-        if ($("#project").val() && $("#importer").val() && filesList.length == 2) {
+        if ($("#project").val() && $("#importer").val() && filesList.length >= 2) {
             ok = true;
         }
         if (ok) {

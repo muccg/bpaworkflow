@@ -123,11 +123,11 @@ def validate_bpaingest_json(self, submission_id):
             resource_linkage_package_id = {}
             packages = state[data_type]["packages"]
             resources = state[data_type]["resources"]
-            data_type_meta = state[data_type]["meta"]
+            # remove data_type_meta as we don't want it in state anymore
+            data_type_meta = state[data_type].pop("meta")
             counts[data_type] = len(packages), len(resources)
             logger.info("counts are %r" % counts)
             for package_obj in packages:
-                logger.info('next obj in packages')
                 linkage_tpl = tuple(
                     package_obj[t] for t in data_type_meta.resource_linkage
                 )
@@ -140,7 +140,6 @@ def validate_bpaingest_json(self, submission_id):
                 resource_linkage_package_id[linkage_tpl] = package_obj["id"]
             linked_tuples = set()
             for resource_linkage, legacy_url, resource_obj in resources:
-                logger.info('next obj in resources')
                 linked_tuples.add(resource_linkage)
                 if resource_linkage not in resource_linkage_package_id:
                     dirname1, resource_name = os.path.split(legacy_url)
@@ -151,7 +150,6 @@ def validate_bpaingest_json(self, submission_id):
                         )
                     )
             for linkage_tpl, package_id in resource_linkage_package_id.items():
-                logger.info('next obj in resource linkages')
                 if linkage_tpl not in linked_tuples:
                     logger.error(
                         "{}: package has no linked resources, tuple: {}".format(
@@ -171,14 +169,6 @@ def validate_bpaingest_json(self, submission_id):
             for chunk in file_obj.chunks():
                 fd.write(chunk)
         return fpath
-
-    def diff_json(json1, json2):
-        logger.debug('starting json diff run ...................')
-        ddiff = DeepDiff(json1, json2, ignore_order=True)
-        logger.info(ddiff)
-        logger.debug('completed json diff run ...................')
-
-
 
     def run(meta_maker):
         logger.debug('starting sub-task downloads run ...................')
@@ -218,10 +208,6 @@ def validate_bpaingest_json(self, submission_id):
         linkage_qc(state)
         logger.debug('finished linking state...................')
         logger.debug('completed sub-task downloads run...................')
-        # with open(args.filename, 'w') as fd:
-        #     json.dump(state, fd, sort_keys=True, indent=2, separators=(',', ': '))
-        json_dump = json.dumps(state, sort_keys=True, indent=2, separators=(',', ': '))
-        diff_json(json_dump, submission['json']['posted'])
         return state
 
     logger.info('Task 3a..........starting prior state....')
