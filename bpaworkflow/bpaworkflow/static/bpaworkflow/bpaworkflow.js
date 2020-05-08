@@ -73,7 +73,7 @@ $(document).ready(function () {
 
     var validate_ui = function () {
         var ok = false;
-        if ($("#project").val() && $("#importer").val() && filesList.length >= 2) {
+        if ($("#project").val() && $("#importer").val() && filesList.length == 2) {
             ok = true;
         }
         if (ok) {
@@ -85,7 +85,7 @@ $(document).ready(function () {
 
     var reset_ui = function () {
         var form = $("#verify-form")[0].reset();
-        $.each(['md5', 'xlsx', 'json'], function (i, t) {
+        $.each(['md5', 'xlsx'], function (i, t) {
             $('#' + t + '-file').show();
             $('#' + t + '-done').hide();
         });
@@ -146,6 +146,8 @@ $(document).ready(function () {
         reset_ui();
     });
 
+    window.poll_handler = null;
+
     $('#verify-btn').click(function (e) {
         e.preventDefault();
         var target = $("#result");
@@ -185,7 +187,6 @@ $(document).ready(function () {
 
                 write_errors('md5', 'MD5 file validation');
                 write_errors('xlsx', 'Submission sheet validation');
-                write_errors('json', 'Json file validation');
             };
 
             var response_obj = result.responseJSON;
@@ -203,11 +204,17 @@ $(document).ready(function () {
                     }
                     display_result(response_obj);
                     if (response_obj['complete'] === false) {
-                        setTimeout(poll_result, 1000);
+                        if (window.poll_handler) {
+                            clearTimeout(window.poll_handler);
+                        }
+                        window.poll_handler = setTimeout(poll_result, 1000);
                     }
                 });
             }
-            setTimeout(poll_result, 1000);
+            if (window.poll_handler) {
+                clearTimeout(window.poll_handler);
+            }
+            window.poll_handler = setTimeout(poll_result, 1000);
         });
     });
 });

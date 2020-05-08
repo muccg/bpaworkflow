@@ -7,17 +7,24 @@ import shutil
 import redis
 import uuid
 import json
-
-from deepdiff import DeepDiff
-
-from .validate import verify_md5file, verify_spreadsheet, verify_metadata
+from .validate import verify_md5file, verify_spreadsheet, verify_metadata, linkage_qc
 from django.conf import settings
 from collections import defaultdict
 from bpaingest.metadata import DownloadMetadata
-from pprint import pprint
 
-logger = logging.getLogger(__name__)
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
+
+
+def make_file_logger(name):
+    tmpf = tempfile.mktemp("bpaingest-log-", dir=settings.CELERY_DATADIR)
+    logger = logging.getLogger(name)
+    logger.propagate = False
+    logger.setLevel(logging.INFO)
+    handler = logging.FileHandler(tmpf)
+    fmt = logging.Formatter("[%(levelname)-7s] %(message)s")
+    handler.setFormatter(fmt)
+    logger.addHandler(handler)
+    return tmpf, logger
 
 
 class TaskState:
@@ -44,32 +51,34 @@ class TaskState:
         return pickle.loads(
             redis_client.hget(self.submission_id.encode("utf8"), name.encode("utf8"))
         )
-
+LOGGER = logging.getLogger("debug")
 
 @shared_task(bind=True)
 def validate_spreadsheet(self, submission_id):
-    logger.debug("Task 1...")
+    LOGGER.debug("Task 1...")
     submission = TaskState(submission_id)
     # retrieved from Redis, so just do it once
     cls = submission.cls
     paths = submission.paths
     fake_metadata_info = submission.fake_metadata_info
     # these are fairly quick
-    submission.xlsx = verify_spreadsheet(cls, paths["xlsx"], fake_metadata_info)
-    logger.debug("Completed Task 1...")
+    logger = logging.getLogger("spreadsheet")
+    submission.xlsx = verify_spreadsheet(logger, cls, paths["xlsx"], fake_metadata_info)
+    LOGGER.debug("Completed Task 1...")
     return submission_id
 
 
 @shared_task(bind=True)
 def validate_md5(self, submission_id):
-    logger.debug("Task 2...")
+    LOGGER.debug("Task 2...")
     submission = TaskState(submission_id)
     # retrieved from Redis, so just do it once
     cls = submission.cls
     paths = submission.paths
     # these are fairly quick
-    submission.md5 = verify_md5file(cls, paths["md5"])
-    logger.debug("Completed Task 2...")
+    logger = logging.getLogger("md5")
+    submission.md5 = verify_md5file(logger, cls, paths["md5"])
+    LOGGER.debug("Completed Task 2...")
     return submission_id
 
 
@@ -83,7 +92,7 @@ def other_bpaingest_json(self, submission_id):
 
 @shared_task(bind=True)
 def validate_bpaingest_json(self, submission_id):
-    logger.debug("Task 3...")
+    LOGGER.debug("Task 3...")
     submission = TaskState(submission_id)
 
     # retrieved from Redis, so just do it once
@@ -91,16 +100,16 @@ def validate_bpaingest_json(self, submission_id):
     fake_metadata_info = submission.fake_metadata_info
     paths = submission.paths
 
-    def unchanged_metadata():
-        logger.debug("....Unchanged download start...")
-        download = DownloadMetadata(cls)
-        logger.debug("....Unchanged download finished...")
+    def prior_metadata(logger):
+        LOGGER.debug("....Unchanged download start...")
+        download = DownloadMetadata(logger, cls)
+        LOGGER.debug("....Unchanged download finished...")
         return download
 
-    def new_metadata():
-        logger.debug("....Changed download start...")
+    def post_metadata(logger):
+        LOGGER.debug("....Changed download start...")
         # this will go ahead and download the existing metadata
-        dlmeta = DownloadMetadata(cls)
+        dlmeta = DownloadMetadata(logger, cls)
         # copy in the new metadata
         for fpath in paths.values():
             shutil.copy(fpath, os.path.join(dlmeta.path, os.path.basename(fpath)))
@@ -111,182 +120,84 @@ def validate_bpaingest_json(self, submission_id):
         with open(dlmeta.info_json, "w") as fd:
             json.dump(metadata_info, fd)
         # recreate the class instance with the updated metadata
-        dlmeta.meta = dlmeta.make_meta()
-        logger.debug("....Changed download finished...")
+        dlmeta.meta = dlmeta.make_meta(logger)
+        LOGGER.debug("....Changed download finished...")
         return dlmeta
 
-    def linkage_qc(state):
-        counts = {}
-        # QC resource linkage
-        logger.info('inside linkage state')
-        for data_type in state:
-            resource_linkage_package_id = {}
-            packages = state[data_type]["packages"]
-            resources = state[data_type]["resources"]
-            # remove data_type_meta as we don't want it in state anymore
-            data_type_meta = state[data_type].pop("meta")
-            counts[data_type] = len(packages), len(resources)
-            logger.info("counts are %r" % counts)
-            for package_obj in packages:
-                linkage_tpl = tuple(
-                    package_obj[t] for t in data_type_meta.resource_linkage
-                )
-                if linkage_tpl in resource_linkage_package_id:
-                    logger.error(
-                        "{}: more than one package linked for tuple {}".format(
-                            data_type, linkage_tpl
-                        )
-                    )
-                resource_linkage_package_id[linkage_tpl] = package_obj["id"]
-            linked_tuples = set()
-            for resource_linkage, legacy_url, resource_obj in resources:
-                linked_tuples.add(resource_linkage)
-                if resource_linkage not in resource_linkage_package_id:
-                    dirname1, resource_name = os.path.split(legacy_url)
-                    _dirname2, ticket = os.path.split(dirname1)
-                    logger.error(
-                        "dangling resource: {} (ticket: {}, linkage: {})".format(
-                            resource_name, ticket, resource_linkage
-                        )
-                    )
-            for linkage_tpl, package_id in resource_linkage_package_id.items():
-                if linkage_tpl not in linked_tuples:
-                    logger.error(
-                        "{}: package has no linked resources, tuple: {}".format(
-                            package_id, linkage_tpl
-                        )
-                    )
-        for data_type, (p, r) in counts.items():
-            logger.debug("{}: {} packages, {} resources".format(data_type, p, r))
+    def validate2_bpaingest_json(self, submission_id, state):
+        LOGGER.debug("Task 4...")
+        # submission = TaskState(submission_id)
 
-    def write_file2(tempd, file_obj):
-        # be a bit paranoid, normalise and strip any path components out
-        name = os.path.basename(file_obj.name)
-        if not name:
-            raise Exception("invalid filename provided in upload")
-        fpath = os.path.join(tempd, name)
-        with open(fpath, "wb") as fd:
-            for chunk in file_obj.chunks():
-                fd.write(chunk)
-        return fpath
+        LOGGER.debug('starting linking state...................')
+        linkage_qc(state)
+        LOGGER.debug('finished linking state...................')
+        LOGGER.debug("Completed Task 4...")
+        return submission_id
 
-    def run(meta_maker):
-        logger.debug('starting sub-task downloads run ...................')
+    def run(name, meta_maker):
+        LOGGER.debug('starting sub-task downloads run ...................')
+        logfile, logger = make_file_logger(name)
         state = defaultdict(lambda: defaultdict(list))
         # download metadata for all project types and aggregate metadata keys
         # data_type_meta = {}
-        with meta_maker() as dlmeta:
+        with meta_maker(logger) as dlmeta:
             meta = dlmeta.meta
             data_type = meta.ckan_data_type
             state[data_type]["meta"] = meta
             (packages, resources) = verify_metadata(meta)
             state[data_type]["packages"] += packages
             state[data_type]["resources"] += resources
-            # try:
-            #     logger.debug('inside next meta maker routine....')
-            #     meta = dlmeta.meta
-            #     # logger.info('meta properties are : %s' % pprint(vars(meta)))
-            #     # logger.info('meta is : %s' % pprint(meta))
-            #     data_type = meta.ckan_data_type
-            #     # logger.info('data type is {}'.format(data_type))
-            #     state[data_type]["meta"] = meta
-            #     state[data_type]["packages"] += meta.get_packages()
-            #     state[data_type]["resources"] += meta.get_resources()
-            #     logger.debug('inside next meta maker routine completed.....')
-            # except Exception as e:
-            #     logger.error("Error processing metadata: {}".format(e))
-            # finally:
-            logger.debug("Continuing...")
+            LOGGER.debug("Continuing...")
 
-        logger.debug('starting sorting state...................')
+        LOGGER.debug('starting sorting state...................')
         for data_type in state:
             state[data_type]["packages"].sort(key=lambda x: x["id"])
             state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
-        logger.debug('finished sorting state...................')
+        LOGGER.debug('finished sorting state...................')
 
-        logger.debug('starting linking state...................')
+        LOGGER.debug('starting linking state...................')
         linkage_qc(state)
-        logger.debug('finished linking state...................')
-        logger.debug('completed sub-task downloads run...................')
-        return state
+        LOGGER.debug('finished linking state...................')
+        LOGGER.debug('completed sub-task downloads run...................')
+        with open(logfile) as fd:
+            log = fd.read()
 
-    logger.info('Task 3a..........starting prior state....')
-    prior_state = run(unchanged_metadata)
-    logger.info('3b...........starting post state....')
-    post_state = run(new_metadata)
-    logger.debug("Completed Task 3...")
+        os.unlink(logfile)
+
+        return log, state
+
+    LOGGER.debug('Task 3a..........starting prior state....')
+    prior_state = run("prior.{}".format(submission_id), prior_metadata)
+    LOGGER.debug('3b...........starting post state....')
+    post_state = run("post.{}".format(submission_id), post_metadata)
+
+    validate2_bpaingest_json(prior_state)
+    LOGGER.debug("Completed Task 3...")
     return submission_id
 
 
 # @shared_task(bind=True)
 # def validate2_bpaingest_json(self, submission_id, state):
-#     logger.debug("Task 4...")
-#     submission = TaskState(submission_id)
+#     LOGGER.debug("Task 4...")
+#     # submission = TaskState(submission_id)
 #
-#     def linkage_qc(state):
-#         counts = {}
-#
-#         # QC resource linkage
-#         logger.info('inside linkage state')
-#         for data_type in state:
-#             resource_linkage_package_id = {}
-#
-#             packages = state[data_type]["packages"]
-#             resources = state[data_type]["resources"]
-#             data_type_meta = state[data_type]["meta"]
-#             counts[data_type] = len(packages), len(resources)
-#             logger.info("counts are %r" % counts)
-#
-#             for package_obj in packages:
-#                 logger.info('next obj in packages')
-#                 linkage_tpl = tuple(
-#                     package_obj[t] for t in data_type_meta.resource_linkage
-#                 )
-#                 if linkage_tpl in resource_linkage_package_id:
-#                     logger.error(
-#                         "{}: more than one package linked for tuple {}".format(
-#                             data_type, linkage_tpl
-#                         )
-#                     )
-#                 resource_linkage_package_id[linkage_tpl] = package_obj["id"]
-#
-#             linked_tuples = set()
-#             for resource_linkage, legacy_url, resource_obj in resources:
-#                 logger.info('next obj in resources')
-#                 linked_tuples.add(resource_linkage)
-#                 if resource_linkage not in resource_linkage_package_id:
-#                     dirname1, resource_name = os.path.split(legacy_url)
-#                     _dirname2, ticket = os.path.split(dirname1)
-#                     logger.error(
-#                         "dangling resource: {} (ticket: {}, linkage: {})".format(
-#                             resource_name, ticket, resource_linkage
-#                         )
-#                     )
-#
-#             for linkage_tpl, package_id in resource_linkage_package_id.items():
-#                 logger.info('next obj in resource linkages')
-#                 if linkage_tpl not in linked_tuples:
-#                     logger.error(
-#                         "{}: package has no linked resources, tuple: {}".format(
-#                             package_id, linkage_tpl
-#                         )
-#                     )
-#
-#         for data_type, (p, r) in counts.items():
-#             logger.debug("{}: {} packages, {} resources".format(data_type, p, r))
-#
-#     logger.debug('starting linking state...................')
+#     LOGGER.debug('starting linking state...................')
 #     linkage_qc(state)
-#     logger.debug('finished linking state...................')
-#     logger.debug("Completed Task 4...")
+#     LOGGER.debug('finished linking state...................')
+#     LOGGER.debug("Completed Task 4...")
 #     return submission_id
+
 
 @shared_task(bind=True)
 def validate_complete(self, submission_id):
-    logger.debug("Task 5...")
+    LOGGER.debug("Task 5...")
     submission = TaskState(submission_id)
     submission.complete = True
-    logger.debug("Completed Task 5...")
+    paths = submission.paths
+    for fpath in paths.values():
+        os.unlink(fpath)
+    os.rmdir(submission.path)
+    LOGGER.debug("Completed Task 5...")
     return submission_id
 
 
@@ -304,14 +215,9 @@ def invoke_validation(cls, files):
 
     def write_files(path):
         paths = {}
-        json = {}
         for field_name, file_obj in files.items():
-            written_file = write_file(path, file_obj)
-            if field_name != 'json':
-                paths[field_name] = written_file
-            else:
-                json['posted'] = written_file
-        return paths, json
+            paths[field_name] = write_file(path, file_obj)
+        return paths
 
     def fabricate_metadata_info(path):
         # fabricate metadata information for the files uploaded by the user
@@ -329,12 +235,12 @@ def invoke_validation(cls, files):
     state.cls = cls
     state.complete = False
     state.path = tempfile.mkdtemp(prefix="bpaworkflow-", dir=settings.CELERY_DATADIR)
-    state.paths, state.json = write_files(state.path)
+    state.paths = write_files(state.path)
     state.fake_metadata_info = fabricate_metadata_info(state.path)
     (
-            validate_spreadsheet.s()
-            | validate_md5.s()
-            | validate_bpaingest_json.s()
-            | validate_complete.s()
+        validate_spreadsheet.s()
+        | validate_md5.s()
+        | validate_bpaingest_json.s()
+        | validate_complete.s()
     ).delay(state.submission_id)
     return state.submission_id
