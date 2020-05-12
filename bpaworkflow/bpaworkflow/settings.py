@@ -425,3 +425,6 @@ GALAXY_KRONA_WORKFLOW_ID = env.get("galaxy_krona_workflow_id", "bf002aa8f96f4e7b
 NONDENOISED_REQUEST_EMAIL = env.get(
     "nondenoised_request_email", "am-data-requests@bioplatforms.com"
 )
+
+# maximum uploaded file size for verification pipeline (bytes)
+VERIFICATION_MAX_SIZE = 8 * (1 << 20)
