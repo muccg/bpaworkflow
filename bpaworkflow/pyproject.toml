@@ -22,7 +22,6 @@ django_extensions = "^2.2.9"
 psycopg2 = "^2.8.5"
 django_redis = "^4.11.0"
 celery = "^4.4.2"
-deepdiff = {extras = ["murmur"], version = "^4.3.2"}
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
