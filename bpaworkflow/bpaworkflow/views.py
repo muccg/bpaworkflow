@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from bpaingest.projects import ProjectInfo
 from bpaingest.organizations import ORGANIZATIONS
 from . import tasks
+from .models import VerificationJob
 
 
 logger = logging.getLogger("rainbow")
@@ -64,11 +65,12 @@ def validate(request):
     private API: validate MD5 file, XLSX file for a given importer
     """
 
-    cls = project_info.cli_options().get(request.POST["importer"])
+    importer = request.POST["importer"]
+    cls = project_info.cli_options().get(importer)
     if not cls or not metadata_verifyable(cls):
         return JsonResponse({"error": "invalid submission"})
 
-    submission_id = tasks.invoke_validation(cls, request.FILES)
+    submission_id = tasks.invoke_validation(importer, request.FILES)
     return JsonResponse({"submission_id": submission_id})
 
 
@@ -78,13 +80,13 @@ def status(request):
     """
     private API: get the current status of a validation task
     """
-    submission_id = request.POST["submission_id"]
-    submission = tasks.TaskState(submission_id)
+    job_uuid = request.POST["submission_id"]
+    job = VerificationJob.objects.get(uuid=job_uuid)
     return JsonResponse(
         {
-            "submission_id": submission_id,
-            "complete": submission.complete,
-            "md5": submission.md5,
-            "xlsx": submission.xlsx,
+            "submission_id": job.uuid,
+            "complete": job.state.get("complete"),
+            "md5": job.state.get("md5_result"),
+            "xlsx": job.state.get("xlsx_result"),
         }
     )
