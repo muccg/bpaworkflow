@@ -5,6 +5,7 @@ from functools import wraps
 from xlrd import XLRDError
 
 from bpaingest.libs.excel_wrapper import ExcelWrapper
+from bpaingest.dump import linkage_qc
 
 logger = logging.getLogger("rainbow")
 
@@ -18,6 +19,10 @@ def exceptions_to_error(verification_func):
             return ["Verification failed with an error: %s" % (repr(e))]
 
     return wrapped_verification
+
+@exceptions_to_error
+def collect_linkage_dump_linkage(diff_state, post_data_type_meta):
+    return linkage_qc(diff_state, post_data_type_meta)
 
 
 @exceptions_to_error

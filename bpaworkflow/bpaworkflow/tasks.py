@@ -7,7 +7,7 @@ import shutil
 import redis
 import json
 from django.http import HttpResponseForbidden
-from .validate import verify_md5file, verify_spreadsheet
+from .validate import verify_md5file, verify_spreadsheet, collect_linkage_dump_linkage
 from .models import VerificationJob
 from django.conf import settings
 from collections import defaultdict
@@ -17,7 +17,7 @@ redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
 
 
 def make_file_logger(name):
-    tmpf = tempfile.mktemp("bpaingest-log-", dir=settings.CELERY_DATADIR)
+    tmpf = tempfile.mktemp(prefix="bpaingest-log-", suffix=".log", dir=settings.CELERY_DATADIR)
     logger = logging.getLogger(name)
     logger.propagate = False
     logger.setLevel(logging.INFO)
@@ -123,12 +123,17 @@ def validate_bpaingest_json(self, job_uuid):
     def run(name, meta_maker):
         logfile, logger = make_file_logger(name)
         state = defaultdict(lambda: defaultdict(list))
+        data_type_meta = {}
         # download metadata for all project types and aggregate metadata keys
         with meta_maker(logger) as dlmeta:
             meta = dlmeta.meta
             data_type = meta.ckan_data_type
-            state[data_type]["packages"] += meta.get_packages()
-            state[data_type]["resources"] += meta.get_resources()
+            data_type_meta[data_type] = meta
+            try:
+                state[data_type]["packages"] += meta.get_packages()
+                state[data_type]["resources"] += meta.get_resources()
+            except AttributeError as ae:
+                logger.warning("There was a problem capturing packages or resources", ae)
 
         for data_type in state:
             state[data_type]["packages"].sort(key=lambda x: x["id"])
@@ -139,11 +144,27 @@ def validate_bpaingest_json(self, job_uuid):
 
         os.unlink(logfile)
 
-        return log, state
+        return log, state, data_type, data_type_meta
 
-    prior_log, prior_state = run("prior.{}".format(job_uuid), prior_metadata)
-    post_log, post_state = run("post.{}".format(job_uuid), post_metadata)
 
+    def diff_json(json1, json2):
+        difference = {k: json2[k] for k in set(json2) - set(json1)}
+        logger.debug("difference is {}".format(difference))
+        return difference
+
+    logfile, logger = make_file_logger("Task-main")
+    prior_log, prior_state, prior_data_type, _prior_data_type_meta = run("prior.{}".format(job_uuid), prior_metadata)
+    # del prior_state[prior_data_type]['packages'][0]
+    # del prior_state[prior_data_type]['packages'][0]
+    post_log, post_state, post_data_type, post_data_type_meta = run("post.{}".format(job_uuid), post_metadata)
+    diff_state = diff_json(prior_state, post_state)
+    linkage_results = collect_linkage_dump_linkage(diff_state, post_data_type_meta)
+    if not linkage_results or len(linkage_results) < 1:
+        linkage_results = ["No errors found in linkage"]
+    if not isinstance(linkage_results, list):
+        linkage_results = ["An error occurred in linking results."]
+    job.state["xlsx"] = linkage_results
+    logger.info("linkage resulsts are {}".format(linkage_results))
     return job_uuid
 
 

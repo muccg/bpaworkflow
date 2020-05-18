@@ -172,7 +172,7 @@ $(document).ready(function () {
                     target.append(elem);
                     elem.append($("<h3>").text(title));
                     var errors = response_obj[topic];
-                    if (errors.length == 0) {
+                    if (errors && errors.length === 0) {
                         var para = elem.append($("<p>"));
                         para.append($('<span class="glyphicon glyphicon-ok">'));
                         para.append($('<span>').text(' No errors.'));
