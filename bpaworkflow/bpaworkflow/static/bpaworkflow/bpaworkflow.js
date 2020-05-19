@@ -187,6 +187,7 @@ $(document).ready(function () {
 
                 write_errors('md5', 'MD5 file validation');
                 write_errors('xlsx', 'Submission sheet validation');
+                write_errors('diff', 'Submission sheet diff results');
             };
 
             var response_obj = result.responseJSON;

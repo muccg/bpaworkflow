@@ -76,9 +76,9 @@ def validate_spreadsheet(self, job_uuid):
     cls = job.get_importer_cls()
     logger = logging.getLogger("spreadsheet")
     paths = job.state["path_info"]
-    job.state["xlsx"] = verify_spreadsheet(
+    job.set(xlsx = verify_spreadsheet(
         logger, cls, paths["xlsx"], job.state["temp_metadata_info"]
-    )
+    ))
     return job_uuid
 
 
@@ -88,14 +88,16 @@ def validate_md5(self, job_uuid):
     cls = job.get_importer_cls()
     logger = logging.getLogger("md5")
     paths = job.state["path_info"]
-    job.state["md5"] = verify_md5file(logger, cls, paths["md5"])
+    result = verify_md5file(logger, cls, paths["md5"])
+    job.set(md5=result)
     return job_uuid
 
 
 @shared_task(bind=True)
 def validate_bpaingest_json(self, job_uuid):
     job = VerificationJob.objects.get(uuid=job_uuid)
-
+    # This job runs longer than others. Set a result early for subscriptions to capture as other results come in, before this one completed.
+    job.set(diff=[])
     # retrieved from Redis, so just do it once
     cls = job.get_importer_cls()
     temp_metadata_info = job.state["temp_metadata_info"]
@@ -133,7 +135,9 @@ def validate_bpaingest_json(self, job_uuid):
                 state[data_type]["packages"] += meta.get_packages()
                 state[data_type]["resources"] += meta.get_resources()
             except AttributeError as ae:
-                logger.warning("There was a problem capturing packages or resources", ae)
+                logger.warning(
+                    "There was a problem capturing packages or resources (It could be that there was no meta-tracking object).", ae
+                )
 
         for data_type in state:
             state[data_type]["packages"].sort(key=lambda x: x["id"])
@@ -143,28 +147,31 @@ def validate_bpaingest_json(self, job_uuid):
             log = fd.read()
 
         os.unlink(logfile)
-
         return log, state, data_type, data_type_meta
 
-
-    def diff_json(json1, json2):
+    def diff_json(logger, json1, json2):
         difference = {k: json2[k] for k in set(json2) - set(json1)}
-        logger.debug("difference is {}".format(difference))
+        logger.debug("Difference is {}".format(difference))
         return difference
 
-    logfile, logger = make_file_logger("Task-main")
-    prior_log, prior_state, prior_data_type, _prior_data_type_meta = run("prior.{}".format(job_uuid), prior_metadata)
+    logger = logging.getLogger("validate_bpaingest_json")
+    prior_log, prior_state, prior_data_type, _prior_data_type_meta = run(
+        "prior.{}".format(job_uuid), prior_metadata
+    )
     # del prior_state[prior_data_type]['packages'][0]
     # del prior_state[prior_data_type]['packages'][0]
-    post_log, post_state, post_data_type, post_data_type_meta = run("post.{}".format(job_uuid), post_metadata)
-    diff_state = diff_json(prior_state, post_state)
+    post_log, post_state, post_data_type, post_data_type_meta = run(
+        "post.{}".format(job_uuid), post_metadata
+    )
+    logger.debug("setting json diff state for job id: {0}".format(job_uuid))
+    diff_state = diff_json(logger, prior_state, post_state)
     linkage_results = collect_linkage_dump_linkage(diff_state, post_data_type_meta)
     if not linkage_results or len(linkage_results) < 1:
         linkage_results = ["No errors found in linkage"]
     if not isinstance(linkage_results, list):
         linkage_results = ["An error occurred in linking results."]
-    job.state["xlsx"] = linkage_results
-    logger.info("linkage resulsts are {}".format(linkage_results))
+    job.set(diff=linkage_results)
+    logger.debug("linkage results are {0}".format(linkage_results))
     return job_uuid
 
 
