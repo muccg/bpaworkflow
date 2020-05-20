@@ -76,7 +76,7 @@ def validate_spreadsheet(self, job_uuid):
     cls = job.get_importer_cls()
     logger = logging.getLogger("spreadsheet")
     paths = job.state["path_info"]
-    job.set(xlsx = verify_spreadsheet(
+    job.set(xlsx=verify_spreadsheet(
         logger, cls, paths["xlsx"], job.state["temp_metadata_info"]
     ))
     return job_uuid
@@ -95,9 +95,10 @@ def validate_md5(self, job_uuid):
 
 @shared_task(bind=True)
 def validate_bpaingest_json(self, job_uuid):
+    logger = logging.getLogger("validate_bpaingest")
     job = VerificationJob.objects.get(uuid=job_uuid)
     # This job runs longer than others. Set a result early for subscriptions to capture as other results come in, before this one completed.
-    job.set(diff=[])
+    job.set(diff=["Validating, please wait..."])
     # retrieved from Redis, so just do it once
     cls = job.get_importer_cls()
     temp_metadata_info = job.state["temp_metadata_info"]
@@ -136,7 +137,8 @@ def validate_bpaingest_json(self, job_uuid):
                 state[data_type]["resources"] += meta.get_resources()
             except AttributeError as ae:
                 logger.warning(
-                    "There was a problem capturing packages or resources (It could be that there was no meta-tracking object).", ae
+                    "There was a problem capturing packages or resources (It could be that there was no meta-tracking object).",
+                    ae
                 )
 
         for data_type in state:
@@ -149,29 +151,21 @@ def validate_bpaingest_json(self, job_uuid):
         os.unlink(logfile)
         return log, state, data_type, data_type_meta
 
-    def diff_json(logger, json1, json2):
+    def diff_json(json1, json2):
         difference = {k: json2[k] for k in set(json2) - set(json1)}
-        logger.debug("Difference is {}".format(difference))
         return difference
 
-    logger = logging.getLogger("validate_bpaingest_json")
     prior_log, prior_state, prior_data_type, _prior_data_type_meta = run(
         "prior.{}".format(job_uuid), prior_metadata
     )
-    # del prior_state[prior_data_type]['packages'][0]
-    # del prior_state[prior_data_type]['packages'][0]
     post_log, post_state, post_data_type, post_data_type_meta = run(
         "post.{}".format(job_uuid), post_metadata
     )
-    logger.debug("setting json diff state for job id: {0}".format(job_uuid))
     diff_state = diff_json(logger, prior_state, post_state)
-    linkage_results = collect_linkage_dump_linkage(diff_state, post_data_type_meta)
-    if not linkage_results or len(linkage_results) < 1:
-        linkage_results = ["No errors found in linkage"]
+    linkage_results = collect_linkage_dump_linkage(logger, diff_state, post_data_type_meta)
     if not isinstance(linkage_results, list):
-        linkage_results = ["An error occurred in linking results."]
+        linkage_results = ["ERROR: An error occurred in linking results."]
     job.set(diff=linkage_results)
-    logger.debug("linkage results are {0}".format(linkage_results))
     return job_uuid
 
 
@@ -217,11 +211,11 @@ def invoke_validation(importer, files):
     )
     job.set(complete=False)
     (
-        validation_setup.s()
-        | validate_spreadsheet.s()
-        | validate_md5.s()
-        | validate_bpaingest_json.s()
-        | validate_complete.s()
+            validation_setup.s()
+            | validate_spreadsheet.s()
+            | validate_md5.s()
+            | validate_bpaingest_json.s()
+            | validate_complete.s()
     ).delay(job.uuid)
 
     return job.uuid

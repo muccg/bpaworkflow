@@ -20,9 +20,19 @@ def exceptions_to_error(verification_func):
 
     return wrapped_verification
 
+
+def linkage_collector(errors_collection):
+    def collate(message):
+        errors_collection.append(message)
+    return collate
+
+
 @exceptions_to_error
-def collect_linkage_dump_linkage(diff_state, post_data_type_meta):
-    return linkage_qc(diff_state, post_data_type_meta)
+def collect_linkage_dump_linkage(logger, diff_state, post_data_type_meta):
+    errors_collection = []
+    collector = linkage_collector(errors_collection)
+    linkage_qc(logger, diff_state, post_data_type_meta, collector)
+    return errors_collection
 
 
 @exceptions_to_error
