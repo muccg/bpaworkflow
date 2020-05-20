@@ -161,7 +161,7 @@ def validate_bpaingest_json(self, job_uuid):
     post_log, post_state, post_data_type, post_data_type_meta = run(
         "post.{}".format(job_uuid), post_metadata
     )
-    diff_state = diff_json(logger, prior_state, post_state)
+    diff_state = diff_json(prior_state, post_state)
     linkage_results = collect_linkage_dump_linkage(logger, diff_state, post_data_type_meta)
     if not isinstance(linkage_results, list):
         linkage_results = ["ERROR: An error occurred in linking results."]
