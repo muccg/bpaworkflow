@@ -16,13 +16,6 @@ WORKDIR /app
 
 RUN env | sort
 
-# Ensure changes to build doesn't re-install requirements
-WORKDIR /tmp/app
-COPY bpa-ingest /tmp/app/bpa-ingest
-COPY bpaworkflow/pyproject.toml bpaworkflow/poetry.lock /tmp/app/bpaworkflow/
-RUN cd /tmp/app/bpaworkflow && poetry install --no-root
-WORKDIR /app
-RUN rm -rf /tmp/app
 # Copy code and install the app
 COPY . /app
 RUN cd /app/bpaworkflow && poetry install
