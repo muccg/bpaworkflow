@@ -86,7 +86,8 @@ def status(request):
         {
             "submission_id": job.uuid,
             "complete": job.state.get("complete"),
-            "md5": job.state.get("md5_result"),
-            "xlsx": job.state.get("xlsx_result"),
+            "md5": job.state.get("md5"),
+            "xlsx": job.state.get("xlsx"),
+            "diff": job.state.get("diff"),
         }
     )

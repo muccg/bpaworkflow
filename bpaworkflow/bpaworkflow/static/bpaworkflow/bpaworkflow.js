@@ -73,7 +73,7 @@ $(document).ready(function () {
 
     var validate_ui = function () {
         var ok = false;
-        if ($("#project").val() && $("#importer").val() && filesList.length == 2) {
+        if ($("#project").val() && $("#importer").val() && filesList.length >= 2) {
             ok = true;
         }
         if (ok) {
@@ -172,7 +172,7 @@ $(document).ready(function () {
                     target.append(elem);
                     elem.append($("<h3>").text(title));
                     var errors = response_obj[topic];
-                    if (errors.length == 0) {
+                    if (errors && errors.length === 0) {
                         var para = elem.append($("<p>"));
                         para.append($('<span class="glyphicon glyphicon-ok">'));
                         para.append($('<span>').text(' No errors.'));
@@ -187,6 +187,7 @@ $(document).ready(function () {
 
                 write_errors('md5', 'MD5 file validation');
                 write_errors('xlsx', 'Submission sheet validation');
+                write_errors('diff', 'Ingest results');
             };
 
             var response_obj = result.responseJSON;
