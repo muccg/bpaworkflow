@@ -25,13 +25,15 @@ if [ "$1" = 'releasetarball' ]; then
     git rev-parse HEAD > .version
     cat .version
     ( cd /app/bpaworkflow && poetry install )
+    ( cd /app/bpa-ingest && poetry install )
     set +x
 
     # vars for creating release tarball
     ARTIFACTS="/env
                /app/docker-entrypoint.sh
                /app/uwsgi
-               /app/${PROJECT_NAME}"
+               /app/${PROJECT_NAME}
+               /app/bpa-ingest"
     TARBALL="/data/${PROJECT_NAME}-${BUILD_VERSION}.tar"
     # shellcheck disable=SC2037
     TAR_OPTS="--exclude-vcs
