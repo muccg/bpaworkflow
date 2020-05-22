@@ -88,6 +88,6 @@ def status(request):
             "complete": job.state.get("complete"),
             "md5": job.state.get("md5"),
             "xlsx": job.state.get("xlsx"),
-            "diff": job.state.get("diff")
+            "diff": job.state.get("diff"),
         }
     )

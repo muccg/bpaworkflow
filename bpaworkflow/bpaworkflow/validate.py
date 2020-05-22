@@ -24,6 +24,7 @@ def exceptions_to_error(verification_func):
 def linkage_collector(errors_collection):
     def collate(message):
         errors_collection.append(message)
+
     return collate
 
 

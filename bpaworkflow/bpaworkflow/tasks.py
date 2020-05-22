@@ -7,17 +7,25 @@ import shutil
 import redis
 import json
 from django.http import HttpResponseForbidden
-from .validate import verify_md5file, verify_spreadsheet, collect_linkage_dump_linkage
+from .validate import (
+    verify_md5file,
+    verify_spreadsheet,
+    collect_linkage_dump_linkage,
+    exceptions_to_error,
+)
 from .models import VerificationJob
 from django.conf import settings
 from collections import defaultdict
 from bpaingest.metadata import DownloadMetadata
+from functools import wraps
 
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
 
 
 def make_file_logger(name):
-    tmpf = tempfile.mktemp(prefix="bpaingest-log-", suffix=".log", dir=settings.CELERY_DATADIR)
+    tmpf = tempfile.mktemp(
+        prefix="bpaingest-log-", suffix=".log", dir=settings.CELERY_DATADIR
+    )
     logger = logging.getLogger(name)
     logger.propagate = False
     logger.setLevel(logging.INFO)
@@ -26,6 +34,16 @@ def make_file_logger(name):
     handler.setFormatter(fmt)
     logger.addHandler(handler)
     return tmpf, logger
+
+
+def wrapped_error_with_msg(func, msg):
+    def inner_func(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            return [msg + ": %s" % (repr(e))]
+
+    return inner_func
 
 
 @shared_task(bind=True)
@@ -76,9 +94,11 @@ def validate_spreadsheet(self, job_uuid):
     cls = job.get_importer_cls()
     logger = logging.getLogger("spreadsheet")
     paths = job.state["path_info"]
-    job.set(xlsx=verify_spreadsheet(
-        logger, cls, paths["xlsx"], job.state["temp_metadata_info"]
-    ))
+    job.set(
+        xlsx=verify_spreadsheet(
+            logger, cls, paths["xlsx"], job.state["temp_metadata_info"]
+        )
+    )
     return job_uuid
 
 
@@ -97,12 +117,21 @@ def validate_md5(self, job_uuid):
 def validate_bpaingest_json(self, job_uuid):
     logger = logging.getLogger("validate_bpaingest")
     job = VerificationJob.objects.get(uuid=job_uuid)
+
     # This job runs longer than others. Set a result early for subscriptions to capture as other results come in, before this one completed.
     job.set(diff=["Validating, please wait..."])
+
     # retrieved from Redis, so just do it once
     cls = job.get_importer_cls()
     temp_metadata_info = job.state["temp_metadata_info"]
     paths = job.state["path_info"]
+
+    previous_errors = next(
+        (next_job for next_job in ["xlsx", "md5"] if job.get(next_job)), None
+    )
+    if previous_errors:
+        job.set(diff=["(No import result is available until md5 and xlsx files are successfully verified.)"])
+        return
 
     def prior_metadata(logger):
         return DownloadMetadata(logger, cls)
@@ -123,6 +152,14 @@ def validate_bpaingest_json(self, job_uuid):
         dlmeta.meta = dlmeta.make_meta(logger)
         return dlmeta
 
+    def get_log_file(logfile):
+        with open(logfile) as fd:
+            log = fd.read()
+
+        os.unlink(logfile)
+
+        return log
+
     def run(name, meta_maker):
         logfile, logger = make_file_logger(name)
         state = defaultdict(lambda: defaultdict(list))
@@ -132,40 +169,36 @@ def validate_bpaingest_json(self, job_uuid):
             meta = dlmeta.meta
             data_type = meta.ckan_data_type
             data_type_meta[data_type] = meta
-            try:
-                state[data_type]["packages"] += meta.get_packages()
-                state[data_type]["resources"] += meta.get_resources()
-            except AttributeError as ae:
-                logger.warning(
-                    "There was a problem capturing packages or resources (It could be that there was no meta-tracking object).",
-                    ae
-                )
 
-        for data_type in state:
-            state[data_type]["packages"].sort(key=lambda x: x["id"])
-            state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
+            state[data_type]["packages"] += meta.get_packages()
+            state[data_type]["resources"] += meta.get_resources()
 
-        with open(logfile) as fd:
-            log = fd.read()
+            for data_type in state:
+                state[data_type]["packages"].sort(key=lambda x: x["id"])
+                state[data_type]["resources"].sort(key=lambda x: x[2]["id"])
 
-        os.unlink(logfile)
-        return log, state, data_type, data_type_meta
+        log = get_log_file(logfile)
+        return log, state, data_type_meta
 
     def diff_json(json1, json2):
         difference = {k: json2[k] for k in set(json2) - set(json1)}
         return difference
 
-    prior_log, prior_state, prior_data_type, _prior_data_type_meta = run(
-        "prior.{}".format(job_uuid), prior_metadata
-    )
-    post_log, post_state, post_data_type, post_data_type_meta = run(
-        "post.{}".format(job_uuid), post_metadata
-    )
-    diff_state = diff_json(prior_state, post_state)
-    linkage_results = collect_linkage_dump_linkage(logger, diff_state, post_data_type_meta)
-    if not isinstance(linkage_results, list):
-        linkage_results = ["ERROR: An error occurred in linking results."]
-    job.set(diff=linkage_results)
+    try:
+        prior_log, prior_state, _prior_data_type_meta = run(
+            "prior.{}".format(job_uuid), prior_metadata
+        )
+        post_log, post_state, post_data_type_meta = run(
+            "post.{}".format(job_uuid), post_metadata
+        )
+        diff_state = diff_json(prior_state, post_state)
+        linkage_results = collect_linkage_dump_linkage(logger, diff_state, post_data_type_meta)
+        job.set(diff=linkage_results)
+    except Exception as p_and_r_error:
+        logger.error(
+            "There was a problem capturing packages or resources.", p_and_r_error,
+        )
+        job.set(diff=[f"ERROR: There was a problem capturing packages and resources for metadata"])
     return job_uuid
 
 
@@ -211,11 +244,11 @@ def invoke_validation(importer, files):
     )
     job.set(complete=False)
     (
-            validation_setup.s()
-            | validate_spreadsheet.s()
-            | validate_md5.s()
-            | validate_bpaingest_json.s()
-            | validate_complete.s()
+        validation_setup.s()
+        | validate_spreadsheet.s()
+        | validate_md5.s()
+        | validate_bpaingest_json.s()
+        | validate_complete.s()
     ).delay(job.uuid)
 
     return job.uuid
