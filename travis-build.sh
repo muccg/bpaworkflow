@@ -16,5 +16,5 @@ cp .env .env_local
 ./develop.sh build builder
 ./develop.sh build dev
 
-pip install poetry
-(cd bpaworkflow && sudo poetry install && poetry run black --check .)
+# pip install poetry
+# (cd bpaworkflow && sudo poetry install && poetry run black --check .)

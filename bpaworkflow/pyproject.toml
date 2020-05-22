@@ -4,7 +4,7 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "bpaworkflow"
-version = "2.0.1"
+version = "2.0.2"
 description = "Workflow management for Bioplatforms Australia projects"
 authors = ["Grahame Bowland <grahame.bowland@qcif.edu.au>"]
 
