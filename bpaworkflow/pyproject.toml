@@ -4,7 +4,7 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "bpaworkflow"
-version = "2.0.2"
+version = "2.0.3"
 description = "Workflow management for Bioplatforms Australia projects"
 authors = ["Grahame Bowland <grahame.bowland@qcif.edu.au>"]
 
@@ -22,6 +22,7 @@ django_extensions = "^2.2.9"
 psycopg2 = "^2.8.5"
 django_redis = "^4.11.0"
 celery = "^4.4.2"
+uwsgi = "^2.0.18"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"

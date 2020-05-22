@@ -255,6 +255,7 @@ setuptools = "*"
 reference = "b5ce2b655af3c855d11250dfb0d88c296f37cb62"
 type = "git"
 url = "https://github.com/BioplatformsAustralia/ckanapi.git"
+
 [[package]]
 category = "main"
 description = "Composable command line interface toolkit"
@@ -935,6 +936,14 @@ socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
 category = "main"
+description = "The uWSGI server"
+name = "uwsgi"
+optional = false
+python-versions = "*"
+version = "2.0.18"
+
+[[package]]
+category = "main"
 description = "Promises, promises, promises."
 name = "vine"
 optional = false
@@ -1005,7 +1014,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "80085fd2832ac3063819960cce73820975c8edb07c8a9bbc52dc41330b10f3d7"
+content-hash = "2f70646da20f4e4ad0edf107baab78eb8c4949f0a32255d0bb6420a7eaab8f6b"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1417,6 +1426,9 @@ uritemplate = [
 urllib3 = [
     {file = "urllib3-1.25.9-py2.py3-none-any.whl", hash = "sha256:88206b0eb87e6d677d424843ac5209e3fb9d0190d0ee169599165ec25e9d9115"},
     {file = "urllib3-1.25.9.tar.gz", hash = "sha256:3018294ebefce6572a474f0604c2021e33b3fd8006ecd11d62107a5d2a963527"},
+]
+uwsgi = [
+    {file = "uwsgi-2.0.18.tar.gz", hash = "sha256:4972ac538800fb2d421027f49b4a1869b66048839507ccf0aa2fda792d99f583"},
 ]
 vine = [
     {file = "vine-1.3.0-py2.py3-none-any.whl", hash = "sha256:ea4947cc56d1fd6f2095c8d543ee25dad966f78692528e68b4fada11ba3f98af"},
