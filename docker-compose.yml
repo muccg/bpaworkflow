@@ -13,7 +13,7 @@ services:
       - ./data/dev:/data
       - dbdata:/var/lib/postgresql/data/
 
-  cache:
+  redis:
     image: redis:3-alpine
 
   runserver:
@@ -30,7 +30,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
-      - cache
+      - redis
     networks:
       default:
         aliases:
@@ -49,7 +49,7 @@ services:
       - WAIT_FOR_CACHE=1
     depends_on:
       - db
-      - cache
+      - redis
 
 volumes:
   dbdata:

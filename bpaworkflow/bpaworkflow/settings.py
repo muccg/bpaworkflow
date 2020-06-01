@@ -359,7 +359,7 @@ USE_X_FORWARDED_HOST = env.get("use_x_forwarded_host", True)
 
 # Celery
 
-CELERY_BROKER_URL = env.get("CELERY_BROKER_URL", "redis://cache")
+CELERY_BROKER_URL = env.get("CELERY_BROKER_URL", "redis://redis")
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 # CELERY_TASK_IGNORE_RESULT = True
 
@@ -376,7 +376,7 @@ CELERY_DATADIR = "/data"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env.getlist("cache", ["redis://cache:6379/1"]),
+        "LOCATION": env.getlist("redis", ["redis://redis:6379/1"]),
         "TIMEOUT": 3600,
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
         "KEY_PREFIX": "bpaworkflow_cache",
@@ -384,7 +384,7 @@ CACHES = {
 }
 
 # TODO used temporarily for galaxy submission stuff. Removed when switched over to SqlAlchemy
-REDIS_HOST = env.get("REDIS_HOST", "cache")
+REDIS_HOST = env.get("REDIS_HOST", "redis")
 REDIS_DB = env.get("REDIS_DB", "0")
 
 CACHES["search_results"] = CACHES["default"]

@@ -75,7 +75,7 @@ function defaults {
     : "${RUNSERVER:=runserver}"
     : "${RUNSERVERPORT:=8000}"
     : "${RUNSERVER_CMD:=runserver}"
-    : "${CACHESERVER:=cache}"
+    : "${CACHESERVER:=redis}"
     : "${CACHEPORT:=6379}"
     : "${MEMCACHE:=${CACHESERVER}:${CACHEPORT}}"
 

@@ -21,6 +21,7 @@ from functools import wraps
 
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
 
+default_wait_message =  "Validating, please wait..."
 
 def make_file_logger(name):
     tmpf = tempfile.mktemp(
@@ -91,6 +92,7 @@ def validation_setup(self, job_uuid):
 @shared_task(bind=True)
 def validate_spreadsheet(self, job_uuid):
     job = VerificationJob.objects.get(uuid=job_uuid)
+    job.set(xlsx=[default_wait_message])
     cls = job.get_importer_cls()
     logger = logging.getLogger("spreadsheet")
     paths = job.state["path_info"]
@@ -105,6 +107,7 @@ def validate_spreadsheet(self, job_uuid):
 @shared_task(bind=True)
 def validate_md5(self, job_uuid):
     job = VerificationJob.objects.get(uuid=job_uuid)
+    job.set(md5=[default_wait_message])
     cls = job.get_importer_cls()
     logger = logging.getLogger("md5")
     paths = job.state["path_info"]
@@ -119,7 +122,7 @@ def validate_bpaingest_json(self, job_uuid):
     job = VerificationJob.objects.get(uuid=job_uuid)
 
     # This job runs longer than others. Set a result early for subscriptions to capture as other results come in, before this one completed.
-    job.set(diff=["Validating, please wait..."])
+    job.set(diff=[default_wait_message])
 
     # retrieved from Redis, so just do it once
     cls = job.get_importer_cls()
