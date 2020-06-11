@@ -17,7 +17,6 @@ EXPOSE 9100 9101
 VOLUME ["/data"]
 
 
-USER ROOT
 # uwsgi user runs under www-data
 RUN usermod -a -G bioplatforms www-data
 RUN chmod 0775 /data
