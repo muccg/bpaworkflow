@@ -19,7 +19,7 @@ VOLUME ["/data"]
 
 # uwsgi user runs under www-data
 RUN usermod -a -G bioplatforms www-data
-RUN chown -r bioplatforms:bioplatforms /data
+RUN chown -R bioplatforms:bioplatforms /data
 RUN chmod 0775 /data
 # Drop privileges, set home
 USER bioplatforms
