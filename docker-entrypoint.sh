@@ -192,7 +192,7 @@ if [ "$1" = 'uwsgi' ]; then
     _django_check_deploy
 
     set -x
-    exec uwsgi --die-on-term --ini "${UWSGI_OPTS} --log-master"
+    exec uwsgi --die-on-term --log-master --ini "${UWSGI_OPTS}"
 fi
 
 # local and test uwsgi entrypoint
