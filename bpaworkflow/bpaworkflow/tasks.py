@@ -28,7 +28,7 @@ def make_file_logger(name):
         prefix="bpaingest-log-", suffix=".log", dir=settings.CELERY_DATADIR
     )
     logger = logging.getLogger(name)
-    logger.propagate = False
+    logger.propagate = True
     logger.setLevel(logging.INFO)
     handler = logging.FileHandler(tmpf)
     fmt = logging.Formatter("[%(levelname)-7s] %(message)s")

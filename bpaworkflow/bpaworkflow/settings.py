@@ -325,7 +325,7 @@ LOGGING = {
         "bpaworkflow": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
-            "propagate": False,
+            "propagate": True,
         },
         "libs": {
             "handlers": ["rainbow", "file"],
@@ -337,7 +337,7 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        "apps": {"handlers": ["rainbow"], "level": "DEBUG", "propagate": False,},
+        "apps": {"handlers": ["rainbow", "console"], "level": "DEBUG", "propagate": True,},
         "py.warnings": {"handlers": ["console"],},
     },
 }
