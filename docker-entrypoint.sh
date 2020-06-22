@@ -228,7 +228,7 @@ if [ "$1" = 'celery_worker' ]; then
     info "[Run] Starting celery_worker"
 
     set -x
-    exec celery -A bpaworkflow worker -l info --uid 1000
+    exec celery -A bpaworkflow worker -l info
 fi
 
 # runtests entrypoint
