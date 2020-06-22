@@ -21,7 +21,8 @@ from functools import wraps
 
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, db=settings.REDIS_DB)
 
-default_wait_message =  "Validating, please wait..."
+default_wait_message = "Validating, please wait..."
+
 
 def make_file_logger(name):
     tmpf = tempfile.mktemp(
@@ -50,7 +51,7 @@ def wrapped_error_with_msg(func, msg):
 @shared_task(bind=True)
 def validation_setup(self, job_uuid):
     logger = logging.getLogger("rainbow")
-    logger.info('Beginning validation setup...')
+    logger.info("Beginning validation setup...")
     """
     sets up the temporary working directory for the uploaded files
     """
@@ -138,7 +139,11 @@ def validate_bpaingest_json(self, job_uuid):
         (next_job for next_job in ["xlsx", "md5"] if job.get(next_job)), None
     )
     if previous_errors:
-        job.set(diff=["(No import result is available until md5 and xlsx files are successfully verified.)"])
+        job.set(
+            diff=[
+                "(No import result is available until md5 and xlsx files are successfully verified.)"
+            ]
+        )
         return
 
     def prior_metadata(logger):
@@ -200,13 +205,19 @@ def validate_bpaingest_json(self, job_uuid):
             "post.{}".format(job_uuid), post_metadata
         )
         diff_state = diff_json(prior_state, post_state)
-        linkage_results = collect_linkage_dump_linkage(logger, diff_state, post_data_type_meta)
+        linkage_results = collect_linkage_dump_linkage(
+            logger, diff_state, post_data_type_meta
+        )
         job.set(diff=linkage_results)
     except Exception as p_and_r_error:
         logger.error(
             "There was a problem capturing packages or resources.", p_and_r_error,
         )
-        job.set(diff=[f"ERROR: There was a problem capturing packages and resources for metadata"])
+        job.set(
+            diff=[
+                f"ERROR: There was a problem capturing packages and resources for metadata"
+            ]
+        )
     return job_uuid
 
 
@@ -227,6 +238,7 @@ valid_filename = re.compile(r"^[A-Za-z0-9_\- .()]+\.(md5|xlsx)$")
 
 def invoke_validation(importer, files):
     logger = logging.getLogger("rainbow")
+
     def get_filename(key):
         name = files[key].name
         if not valid_filename.match(name):

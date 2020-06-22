@@ -337,7 +337,11 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        "apps": {"handlers": ["rainbow", "console"], "level": "DEBUG", "propagate": True,},
+        "apps": {
+            "handlers": ["rainbow", "console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
         "py.warnings": {"handlers": ["console"],},
     },
 }
