@@ -27,4 +27,4 @@ ENV HOME /data
 WORKDIR /data
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["uwsgi"]
+CMD ["gunicorn"]

@@ -25,7 +25,7 @@ default_wait_message =  "Validating, please wait..."
 
 def make_file_logger(name):
     tmpf = tempfile.mktemp(
-        prefix="bpaingest-log-", suffix=".log", dir=settings.CELERY_DATADIR
+        prefix="bpaingest-log-", suffix=".log", dir=settings.CELERY_DATADIR + "/log"
     )
     logger = logging.getLogger(name)
     logger.propagate = True
@@ -49,6 +49,8 @@ def wrapped_error_with_msg(func, msg):
 
 @shared_task(bind=True)
 def validation_setup(self, job_uuid):
+    logger = logging.getLogger("rainbow")
+    logger.info('Beginning validation setup...')
     """
     sets up the temporary working directory for the uploaded files
     """
@@ -86,6 +88,7 @@ def validation_setup(self, job_uuid):
         temp_path=temp_path,
         temp_metadata_info=fabricate_metadata_info(temp_path),
     )
+    logger.info("Complete validation setup.")
     return job_uuid
 
 
@@ -106,8 +109,10 @@ def validate_spreadsheet(self, job_uuid):
 
 @shared_task(bind=True)
 def validate_md5(self, job_uuid):
+    logger = logging.getLogger("rainbow")
     job = VerificationJob.objects.get(uuid=job_uuid)
     job.set(md5=[default_wait_message])
+    logger.info("md5 is set with default message.")
     cls = job.get_importer_cls()
     logger = logging.getLogger("md5")
     paths = job.state["path_info"]
@@ -221,6 +226,7 @@ valid_filename = re.compile(r"^[A-Za-z0-9_\- .()]+\.(md5|xlsx)$")
 
 
 def invoke_validation(importer, files):
+    logger = logging.getLogger("rainbow")
     def get_filename(key):
         name = files[key].name
         if not valid_filename.match(name):
@@ -238,6 +244,7 @@ def invoke_validation(importer, files):
             buf.append(chunk)
         return b"".join(buf)
 
+    logger.info("Starting verification job process...")
     job = VerificationJob.create(
         importer=importer,
         md5_name=get_filename("md5"),
@@ -246,6 +253,7 @@ def invoke_validation(importer, files):
         xlsx_data=read_file("xlsx"),
     )
     job.set(complete=False)
+    logger.info("Job initialisation completed.")
     (
         validation_setup.s()
         | validate_spreadsheet.s()

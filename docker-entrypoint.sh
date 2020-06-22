@@ -195,6 +195,26 @@ if [ "$1" = 'uwsgi' ]; then
     exec uwsgi --die-on-term --log-master --ini "${UWSGI_OPTS}"
 fi
 
+# prod gunicorn entrypoint
+if [ "$1" = 'gunicorn' ]; then
+    info "[Run] Starting prod gunicorn"
+
+    _django_collectstatic
+    _django_migrate
+    # TODO what other startup do we need for prod?
+    _django_check_deploy
+
+    set -x
+
+    touch /data/log/gunicorn.log
+    touch /data/log/gunicorn-access.log
+    touch /data/log/error.log
+
+    exec gunicorn \
+    -b 0.0.0.0:9100 --chdir /app --workers=2 uwsgi.django
+fi
+
+
 # local and test uwsgi entrypoint
 if [ "$1" = 'uwsgi_local' ]; then
     info "[Run] Starting local uwsgi"
@@ -207,7 +227,8 @@ if [ "$1" = 'uwsgi_local' ]; then
     _django_check_deploy
 
     set -x
-    exec uwsgi --die-on-term --ini "${UWSGI_OPTS}"
+#    we just want the http gateway in front of bpaworkflow container (ie: no proxy server is running)
+    exec uwsgi --die-on-term --ini "/app/uwsgi/vassals/http-9000.ini"
 fi
 
 # runserver entrypoint

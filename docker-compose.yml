@@ -16,18 +16,21 @@ services:
   redis:
     image: redis:3-alpine
 
-  runserver:
+  bpaworkflow:
     image: bioplatformsaustralia/bpaworkflow-dev
+    command: gunicorn
     env_file:
       - .env_local
     environment:
       - WAIT_FOR_DB=1
       - WAIT_FOR_CACHE=1
+      - log_directory=/data/log/
+      - LOG_DIRECTORY=/data/log/
     volumes:
       - .:/app
       - ./data/dev:/data
     ports:
-      - "8000:8000"
+      - "9000:9000"
     depends_on:
       - db
       - redis
@@ -36,7 +39,7 @@ services:
         aliases:
           - web
 
-  celeryworker:
+  bpaworkflowceleryworker:
     image: bioplatformsaustralia/bpaworkflow-dev
     command: celery_worker
     volumes:
