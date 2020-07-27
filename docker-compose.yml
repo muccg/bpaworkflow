@@ -18,7 +18,7 @@ services:
 
   bpaworkflow:
     image: bioplatformsaustralia/bpaworkflow-dev
-    command: gunicorn
+    command: ["uwsgi"]
     env_file:
       - .env_local
     environment:
