@@ -268,7 +268,7 @@ if [ "$1" = 'aloe' ]; then
     _aloe "$@"
 fi
 
-warn "[RUN]: Builtin command not provided [tarball|aloe|runtests|runserver|runserver_plus|uwsgi|uwsgi_local]"
+warn "[RUN]: Builtin command not provided [tarball|aloe|runtests|runserver|runserver_plus|uwsgi|gunicorn|uwsgi_local]"
 info "[RUN]: $*"
 
 set -x
