@@ -44,7 +44,7 @@ def metadata(request):
         lambda x: metadata_verifyable(x["cls"]), project_info.metadata_info
     ):
         obj = dict(
-            (t, info[t]) for t in ("slug", "omics", "technology", "analysed", "pool")
+            (t, info[t]) for t in ("slug", "omics", "technology", "analysed", "pool", "project")
         )
         by_organization[info["organization"]].append(obj)
     return JsonResponse(

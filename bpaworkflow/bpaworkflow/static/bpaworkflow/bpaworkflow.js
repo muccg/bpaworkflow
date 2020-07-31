@@ -3,7 +3,7 @@
 $(document).ready(function () {
     var projects;
     var importers;
-    var blank_option = { 'text': '----', 'value': null };
+    var blank_option = {'text': '----', 'value': null};
 
     var filesList = [];
     var paramNames = [];
@@ -25,7 +25,15 @@ $(document).ready(function () {
                 'text': val.title
             };
         }));
-    }
+    };
+
+    var has_consistent_project_name = function (list_of_project_type_properties) {
+        const project_name_to_match = _.get(_.head(list_of_project_type_properties), 'project')
+        const different_project_name = _.find(list_of_project_type_properties, function (o) {
+            return _.get(o, 'project') !== project_name_to_match
+        });
+        return _.isEmpty(different_project_name)
+    };
 
     var update_import_options = function (data) {
         var selected_project = $("#project").val();
@@ -34,8 +42,13 @@ $(document).ready(function () {
             return s.charAt(0).toUpperCase() + s.slice(1);
         };
         if (selected_project) {
+            const has_consistent_project_naming = has_consistent_project_name(importers[selected_project]);
+
             options = _.map(importers[selected_project], function (data) {
                 var desc = [];
+                if (!has_consistent_project_naming) {
+                    desc.push(_.capitalize(_.get(data, 'project')))
+                }
                 if (data.analysed) {
                     desc.push('Analysed');
                 }
@@ -48,6 +61,7 @@ $(document).ready(function () {
                 if (data.pool) {
                     desc.push('(Pooled)');
                 }
+
                 return {
                     'value': data.slug,
                     'text': desc.join(' ')
@@ -197,7 +211,7 @@ $(document).ready(function () {
                     method: 'POST',
                     dataType: 'json',
                     url: window.bpa_workflow_config['status_endpoint'],
-                    data: { 'submission_id': submission_id },
+                    data: {'submission_id': submission_id},
                 }).done(function (response_obj) {
                     if (result.status != 200) {
                         // TODO: display an error message
