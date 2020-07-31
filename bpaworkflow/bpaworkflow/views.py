@@ -11,9 +11,13 @@ from bpaingest.organizations import ORGANIZATIONS
 from . import tasks
 from .models import VerificationJob
 
-
 logger = logging.getLogger("rainbow")
 project_info = ProjectInfo()
+
+
+# convenience method
+def has_its_own_active_ingest(cls):
+    return is_active_project(cls) and metadata_verifyable(cls)
 
 
 def metadata_verifyable(cls):
@@ -22,6 +26,14 @@ def metadata_verifyable(cls):
     the spreadsheet and MD5 file
     """
     return hasattr(cls, "spreadsheet") and hasattr(cls, "md5")
+
+
+def is_active_project(cls):
+    return getattr(cls, "organization", "") not in [
+        "bpa-sepsis",
+        "bpa-great-barrier-reef",
+        "bpa-stemcells",
+    ]
 
 
 class WorkflowIndex(TemplateView):
@@ -40,13 +52,17 @@ def metadata(request):
     private API: given taxonomy constraints, return the possible options
     """
     by_organization = defaultdict(list)
+    logger.info(f"at beginning by_organization is: {by_organization}")
     for info in filter(
-        lambda x: metadata_verifyable(x["cls"]), project_info.metadata_info
+            lambda x: has_its_own_active_ingest(x["cls"]), project_info.metadata_info
     ):
         obj = dict(
-            (t, info[t]) for t in ("slug", "omics", "technology", "analysed", "pool", "project")
+            (t, info[t])
+            for t in ("slug", "omics", "technology", "analysed", "pool", "project")
         )
         by_organization[info["organization"]].append(obj)
+    logger.info("have by organization...")
+    logger.info(f"{by_organization}")
     return JsonResponse(
         {
             "importers": by_organization,
