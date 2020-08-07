@@ -18,7 +18,6 @@ services:
 
   bpaworkflow:
     image: bioplatformsaustralia/bpaworkflow-dev
-    command: ["uwsgi"]
     env_file:
       - .env_local
     environment:
@@ -30,7 +29,7 @@ services:
       - .:/app
       - ./data/dev:/data
     ports:
-      - "9000:9000"
+      - "8000:8000"
     depends_on:
       - db
       - redis
