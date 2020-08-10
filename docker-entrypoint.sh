@@ -162,7 +162,7 @@ function _runserver() {
     set -x
     while true; do
         # shellcheck disable=SC2086
-        cd /app/bpaworkflow && poetry run django-admin.py ${RUNSERVER_OPTS}
+        cd /app/bpaworkflow && /env/bin/poetry run django-admin.py ${RUNSERVER_OPTS}
         echo "oh no, runserver crashed: $!"
         sleep 5
     done
