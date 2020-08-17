@@ -182,23 +182,23 @@ $(document).ready(function () {
                 var target = $("#result");
                 target.empty();
 
-		var render_errors = function (message) {
-			let help_site = 'https://bioplatformsaustralia.github.io/bpaworkflow-messages/';
-			let message_regexp = /(E.*):(.*)/;
-			let result = message.match(message_regexp);
-			if (result) {
-				var code = $("<a>", { 
-				 	text: result[1],
-				 	title: result[1],
-				 	href: ''.concat(help_site, result[1], '.html')
-				}).prop('outerHTML');
-				var description = result[2];
-				return $("<li>").html(''.concat(code, description));
-			} else {
-				var msg = $('<span>').text(message);
-				return msg;
-			}
-		}
+                var render_errors = function (message) {
+                    let help_site = 'https://bioplatformsaustralia.github.io/bpaworkflow-messages/';
+                    let message_regexp = /(E.*):(.*)/;
+                    let result = message.match(message_regexp);
+                    if (result) {
+                        var code = $("<a>", { 
+                            text: result[1],
+                            title: result[1],
+                            href: ''.concat(help_site, result[1], '.html')
+                        }).prop('outerHTML');
+                        var description = result[2];
+                        return $("<li>").html(''.concat(code, description));
+                    } else {
+                        var msg = $('<span>').text(message);
+                        return msg;
+                    }
+                }
 
                 var write_errors = function (topic, title, error_list) {
                     var elem = $("<div>");
