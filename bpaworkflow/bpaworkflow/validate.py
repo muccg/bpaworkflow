@@ -50,8 +50,8 @@ def verify_spreadsheet(logging, cls, fpath, metadata_info):
         )
     except XLRDError as e:
         return [
-            "The provided spreadsheet could not be read: %s" % str(e),
-            "Please ensure the spreadsheet is in Microsoft Excel (XLSX) format.",
+                "E3003: The provided spreadsheet could not be read: %s" % str(e),
+                "Please ensure the spreadsheet is in Microsoft Excel (XLSX) format.",
         ]
     return wrapper.get_errors()
 
