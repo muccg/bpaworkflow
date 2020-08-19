@@ -215,7 +215,7 @@ def validate_bpaingest_json(self, job_uuid):
         )
         job.set(
             diff=[
-                f"ERROR: There was a problem capturing packages and resources for metadata"
+                f"E4001: There was a problem capturing packages and resources for metadata"
             ]
         )
     return job_uuid
