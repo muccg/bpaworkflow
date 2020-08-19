@@ -184,7 +184,7 @@ $(document).ready(function () {
 
                 var render_errors = function (message) {
                     let help_site = 'https://bioplatformsaustralia.github.io/bpaworkflow-messages/';
-                    let message_regexp = /(E.*):(.*)/;
+                    let message_regexp = /(E\d+): (.*)/;
                     let result = message.match(message_regexp);
                     if (result) {
                         var code = $("<a>", { 
@@ -193,7 +193,7 @@ $(document).ready(function () {
                             href: ''.concat(help_site, result[1], '.html')
                         }).prop('outerHTML');
                         var description = result[2];
-                        return $("<li>").html(''.concat(code, description));
+                        return $("<li>").html(''.concat(code, ' ', description));
                     } else {
                         var msg = $('<span>').text(message);
                         return msg;
