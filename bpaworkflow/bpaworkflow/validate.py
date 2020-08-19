@@ -60,4 +60,4 @@ def verify_spreadsheet(logging, cls, fpath, metadata_info):
 def verify_md5file(logger, cls, fpath):
     instance = cls(logger, "/dev/null")
     p = instance.parse_md5file_unwrapped(fpath)
-    return ["File does not meet convention: `%s'" % t for t in p.no_match]
+    return ["E2001: File does not meet convention: `%s'" % t for t in p.no_match]
