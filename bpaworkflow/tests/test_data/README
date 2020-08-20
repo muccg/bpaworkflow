@@ -1,0 +1,23 @@
+Test cases for BPA Workflow
+===========================
+
+Unless noted otherwise, all test cases are based on the submission 
+spreadsheet and MD5 checksums files located in the same directory as this
+README
+
+These are:
+ 79639_GAP_AGRF_PAE47351_checksums.md5
+ 79639_GAP_AGRF_PAE47351_metadata.xlsx
+
+The test cases are currently grouped into directories:
+
+flagged/
+
+ Test cases in this directory are named after the error code they generate
+ that is displayed on the BPA Workflow frontend.
+
+not_flagged/
+
+ Test cases in this directory are not currently caught by the BPA Workflow
+ frontend.  Further code updates to bpa-workflow and bpa-ingest may be 
+ required to catch these errors.
