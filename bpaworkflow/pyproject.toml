@@ -4,9 +4,9 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "bpaworkflow"
-version = "2.0.14"
+version = "2.0.15"
 description = "Workflow management for Bioplatforms Australia projects"
-authors = ["Grahame Bowland <grahame.bowland@qcif.edu.au>", "Matthew Mulholland <matt@redboxresearchdata.com.au>"]
+authors = ["Grahame Bowland <grahame.bowland@qcif.edu.au>", "Matthew Mulholland <matt@redboxresearchdata.com.au>", "Mark Tearle <mark.tearle@qcif.edu.au>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
