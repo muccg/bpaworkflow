@@ -54,7 +54,7 @@ def metadata(request):
     by_organization = defaultdict(list)
     logger.info(f"at beginning by_organization is: {by_organization}")
     for info in filter(
-            lambda x: has_its_own_active_ingest(x["cls"]), project_info.metadata_info
+        lambda x: has_its_own_active_ingest(x["cls"]), project_info.metadata_info
     ):
         obj = dict(
             (t, info[t])
