@@ -135,16 +135,18 @@ def validate_bpaingest_json(self, job_uuid):
     temp_metadata_info = job.state["temp_metadata_info"]
     paths = job.state["path_info"]
 
+    # Don't validate unless the list of errors returned for each previous job is empty
     previous_errors = next(
         (next_job for next_job in ["xlsx", "md5"] if job.get(next_job)), None
     )
+
     if previous_errors:
         job.set(
             diff=[
                 "(No import result is available until md5 and xlsx files are successfully verified.)"
             ]
         )
-        return
+        return job_uuid
 
     def prior_metadata(logger):
         return DownloadMetadata(logger, cls)
@@ -223,6 +225,11 @@ def validate_bpaingest_json(self, job_uuid):
 
 @shared_task(bind=True)
 def validate_complete(self, job_uuid):
+    """
+    Clean up after validation is complete for the job (even if unsuccessful)
+
+    Signal state to front end to stop polling server
+    """
     job = VerificationJob.objects.get(uuid=job_uuid)
     paths = job.state["path_info"]
     job.set(complete=True)
